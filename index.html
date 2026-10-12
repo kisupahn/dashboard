@@ -14,8 +14,10 @@
 
     body {
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
+      gap: 20px;
       background: #111;
       color: white;
       font-family: sans-serif;
@@ -23,15 +25,24 @@
 
     h1 {
       font-size: 8vw;
+      margin: 0;
+    }
+
+    #testBtn {
+      font-size: 32px;
+      padding: 15px 40px;
+      cursor: pointer;
     }
   </style>
 </head>
 
 <body>
-  <h1 id="clock">Loading...</h1><p></p>
-  <script src="script.js"></script>
-  <div id="memo">메모 불러오는 중...</div><p></p>
+  <h1 id="clock">Loading...</h1>
+
+  <div id="memo">메모 불러오는 중...</div>
+
   <button id="testBtn">5</button>
+
+  <script src="script.js"></script>
 </body>
-  
 </html>
