@@ -6,22 +6,33 @@
 
   <title>서울 교통 대시보드</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0 auto; padding: clamp(18px, 3vw, 40px); max-width: 1200px; background: #10141d; color: #f3f6ff; font-family: system-ui, sans-serif; }
+    body { margin: 0 auto; padding: clamp(18px, 3vw, 40px); max-width: 1200px; background: #10141d; color: #f3f6ff; font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; -webkit-font-smoothing: antialiased; }
     header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 28px; }
-    h1 { font-size: clamp(42px, 8vw, 96px); font-variant-numeric: tabular-nums; letter-spacing: -3px; margin: 0; }
-    h2 { margin: 0; font-size: clamp(25px, 3.5vw, 40px); letter-spacing: -1px; }
+    h1 { font-size: clamp(40px, 7.5vw, 90px); font-weight: 500; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -3px; margin: 0; }
+    h2 { margin: 0; font-size: clamp(25px, 3.5vw, 40px); letter-spacing: -.04em; line-height: 1.35; word-break: keep-all; overflow-wrap: normal; }
     button, input { font: inherit; border: 1px solid #374762; border-radius: 8px; padding: 10px 14px; }
     button { cursor: pointer; background: #1c2b42; color: #e6edfa; } button:disabled { opacity: .45; }
     button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #9ab9ff; outline-offset: 3px; }
     .panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     article { min-width: 0; padding: clamp(20px, 3vw, 32px); background: #172131; border: 1px solid #2c3c55; border-radius: 16px; }
+    .transit-card { --accent: #81d5af; --tint: #172b29; --edge: #2d5145; background: var(--tint); border-color: var(--edge); }
+    .transit-card.subway { --accent: #e6c56a; --tint: #292719; --edge: #51472b; }
+    .card-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .card-head h2 { flex: 1 1 140px; min-width: 0; }
+    .transport-icon { width: 38px; height: 38px; color: var(--accent); flex: 0 0 38px; }
+    .transport-icon svg { width: 100%; height: 100%; display: block; }
+    .route-badge { color: var(--accent); border: 1px solid var(--edge); border-radius: 9px; padding: 5px 11px; font-size: clamp(16px, 2.2vw, 24px); font-weight: 600; white-space: nowrap; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .loading { margin: 14px 0 0; color: var(--accent); font-size: 15px; }
     .arrivals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 22px; }
-    .arrival { min-width: 0; min-height: 90px; padding: 0 12px; text-align: center; border-left: 1px solid #33425b; }
+    .arrival { min-width: 0; min-height: 92px; padding: 0 12px; text-align: center; border-left: 1px solid var(--edge); }
     .arrival:first-child { border-left: 0; padding-left: 0; } .arrival:last-child { padding-right: 0; }
-    .arrival p { font-size: clamp(20px, 3.6vw, 42px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: #a7d6ff; margin: 4px 0 10px; overflow-wrap: anywhere; }
-    .arrival small { color: #aab8d0; font-size: clamp(14px, 2vw, 22px); }
+    .arrival p { font-size: clamp(19px, 3.4vw, 40px); font-weight: 600; line-height: 1.4; word-break: keep-all; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--accent); margin: 4px 0 10px; overflow-wrap: normal; }
+    .arrival small { color: #aab8d0; font-size: clamp(14px, 2vw, 22px); white-space: nowrap; line-height: 1.5; }
     .error { color: #ffc5a8; line-height: 1.5; font-size: 14px; }
     #settings { margin: 0 0 24px auto; max-width: 640px; padding: 18px; background: #172131; border: 1px solid #2c3c55; border-radius: 10px; }
     .settings-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; } #settings h2 { font-size: 18px; letter-spacing: 0; }
@@ -31,7 +42,7 @@
     pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
     #refreshStatus { font-size: 12px; color: #aab8d0; } #saveStatus:empty { display: none; } #emptyState { color: #aab8d0; }
     [hidden] { display: none !important; }
-    @media(max-width: 600px) { header { flex-wrap: wrap; } header > div { margin-left: auto; } form { grid-template-columns: 1fr; } .arrival { padding: 0 8px; } }
+    @media(max-width: 600px) { header { flex-wrap: wrap; } header > div { margin-left: auto; } form { grid-template-columns: 1fr; } .arrival { padding: 0 8px; } .arrival p { min-height: 2.8em; } }
   </style>
 </head>
 
@@ -46,7 +57,7 @@
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <label>버스 · 정류소/노선<input id="arsId" placeholder="20726/동작08, 20014/360" maxlength="100"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="180" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.2</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.3</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -55,8 +66,8 @@
   <p id="emptyState">설정에서 조회할 곳을 추가하세요.</p>
   <main class="panels" id="arrivalPanels"></main>
 
-  <script src="route-catalog.js?v=20261103.2"></script>
-  <script src="browser-api.js?v=20261103.2"></script>
-  <script src="script.js?v=20261103.2"></script>
+  <script src="route-catalog.js?v=20261103.3"></script>
+  <script src="browser-api.js?v=20261103.3"></script>
+  <script src="script.js?v=20261103.3"></script>
 </body>
 </html>

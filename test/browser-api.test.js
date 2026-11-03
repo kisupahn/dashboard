@@ -86,13 +86,21 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply({ ok: true, data: busBody }); },
   });
   vm.runInContext(readFileSync(new URL('../script.js', import.meta.url), 'utf8'), ctx);
+  for (const card of ids.arrivalPanels.children) {
+    assert.equal(card.children[1].textContent, '(로딩중)');
+    assert.equal(card.children[1].hidden, false);
+  }
   await new Promise(resolve => setImmediate(resolve));
   const cards = ids.arrivalPanels.children;
   assert.equal(cards.length, 3);
-  assert.equal(cards[0].children[0].textContent, '20276');
-  assert.equal(cards[1].children[0].textContent, '노들역');
-  assert.equal(cards[2].children[0].textContent, '노들역');
+  assert.equal(cards[0].children[0].children[1].textContent, '20276');
+  assert.equal(cards[1].children[0].children[1].textContent, '노들역');
+  assert.equal(cards[2].children[0].children[1].textContent, '노들역');
   assert.equal(cards[2].children[1].className, 'error');
+  assert.equal(cards[1].children[0].children[2].textContent, '360');
+  assert.equal(cards[1].children[1].hidden, true);
+  assert.equal(cards[0].className, 'transit-card bus');
+  assert.equal(cards[2].className, 'transit-card subway');
   for (const card of cards) assert.equal(card.children[2].children.length, 3);
   assert.equal(cards[0].children[2].children[0].children[0].textContent, '');
   assert.equal(cards[1].children[2].children[0].children[0].textContent, '3분');

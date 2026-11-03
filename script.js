@@ -27,18 +27,32 @@ updateClock(); setInterval(updateClock, 1000);
   $('closeSettingsBtn').onclick = function () { toggle(false); };
   document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !$('settings').hidden) toggle(false); });
   function makeCard(target) {
-    var article = document.createElement('article');
+    var article = document.createElement('article'); article.className = 'transit-card ' + target.type;
+    var cardHead = document.createElement('div'); cardHead.className = 'card-head';
+    var icon = document.createElement('span'); icon.className = 'transport-icon';
+    icon.setAttribute('role', 'img'); icon.setAttribute('aria-label', target.type === 'bus' ? '버스' : '지하철');
+    icon.innerHTML = target.type === 'bus'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 10h14M8 3v7M8 18v3m8-3v3"/><circle cx="8.5" cy="14.5" r=".9" fill="currentColor"/><circle cx="15.5" cy="14.5" r=".9" fill="currentColor"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="6" y="3" width="12" height="15" rx="4"/><path d="M6 10h12M9 18l-3 3m9-3 3 3M10 6h4"/><circle cx="9" cy="14" r=".8" fill="currentColor"/><circle cx="15" cy="14" r=".8" fill="currentColor"/></svg>';
     var heading = document.createElement('h2'); heading.textContent = TransitAPI.label(target);
-    var status = document.createElement('p'); status.className = 'error'; status.setAttribute('role', 'status'); status.hidden = true;
+    var badge = document.createElement('span'); badge.className = 'route-badge';
+    badge.textContent = target.type === 'bus' ? target.route : (target.line ? Number(target.line) - 1000 + '호선' : '');
+    badge.hidden = !badge.textContent;
+    cardHead.appendChild(icon); cardHead.appendChild(heading); cardHead.appendChild(badge);
+    var status = document.createElement('p'); status.className = 'loading'; status.setAttribute('role', 'status'); status.textContent = '(로딩중)';
     var arrivals = document.createElement('div'); arrivals.className = 'arrivals';
-    article.appendChild(heading); article.appendChild(status); article.appendChild(arrivals);
+    article.appendChild(cardHead); article.appendChild(status); article.appendChild(arrivals);
     $('arrivalPanels').appendChild(article);
-    var card = { target: target, heading: heading, status: status, arrivals: arrivals, ticks: [], items: [] };
+    var card = { target: target, heading: heading, badge: badge, status: status, arrivals: arrivals, ticks: [], items: [] };
     render(card, []);
     return card;
   }
   function concise(message) {
-    return message.replace(/^약\s*/, '').replace(/\s*후(?:\s*\([^)]*\))?$/, '').replace('예정 시각 경과 · 새 정보 대기', '');
+    if (message === '예정 시각 경과 · 새 정보 대기') return '';
+    var text = message.replace(/^약\s*/, '');
+    var duration = text.match(/^(\d+)분(?:\s*(\d+)초)?/);
+    if (duration) return duration[1] + '분' + (duration[2] ? ' ' + duration[2] + '초' : '');
+    return text.replace(/\s*후(?:\s*\([^)]*\))?$/, '');
   }
   function render(card, items) {
     card.arrivals.textContent = ''; card.ticks = []; card.items = items;
@@ -66,14 +80,18 @@ updateClock(); setInterval(updateClock, 1000);
   }
   async function load(target, card, run, force) {
     if (run !== generation) return;
-    card.status.hidden = true; card.status.textContent = '';
+    card.status.hidden = false; card.status.textContent = '(로딩중)'; card.status.className = 'loading';
     var controller = new AbortController(); controllers.push(controller);
     var timeout = setTimeout(function () { controller.abort(); }, 40000);
     try {
       var items = await client.load(target, Object.assign({}, settings, { forceRefresh: force }), controller.signal);
       if (run !== generation) return;
       render(card, items);
-      if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = items[0].stop;
+      card.status.hidden = true; card.status.textContent = '';
+      if (target.type === 'bus' && items[0]) {
+        if (items[0].stop) card.heading.textContent = items[0].stop;
+        card.badge.textContent = items[0].title;
+      }
       diagnostics();
     } catch (error) {
       if (run !== generation) return;
@@ -95,7 +113,7 @@ updateClock(); setInterval(updateClock, 1000);
       $('arrivalPanels').textContent = '';
       cards = targets.map(makeCard); signature = nextSignature;
     }
-    cards.forEach(function (card) { render(card, []); card.status.hidden = true; });
+    cards.forEach(function (card) { render(card, []); card.status.hidden = false; card.status.textContent = '(로딩중)'; card.status.className = 'loading'; });
     $('emptyState').hidden = targets.length > 0;
     $('refreshBtn').disabled = true;
     // 여러 곳을 조회해도 동시 API 요청은 3건으로 제한합니다.
