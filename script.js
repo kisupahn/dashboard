@@ -85,18 +85,21 @@ updateClock(); setInterval(updateClock, 1000);
       var up = button('↑', function () { var x = draft[index - 1]; draft[index - 1] = stop; draft[index] = x; renderEditor(); }); up.disabled = index === 0; up.setAttribute('aria-label', '정류장 ' + (index + 1) + ' 위로');
       var down = button('↓', function () { var x = draft[index + 1]; draft[index + 1] = stop; draft[index] = x; renderEditor(); }); down.disabled = index === draft.length - 1; down.setAttribute('aria-label', '정류장 ' + (index + 1) + ' 아래로');
       actions.appendChild(up); actions.appendChild(down); actions.appendChild(button('삭제', function () { draft.splice(index, 1); renderEditor(); })); box.appendChild(actions);
-      var types = document.createElement('div'); types.className = 'type-toggle';
-      ['bus', 'subway'].forEach(function (type) {
-        var choice = button(type === 'bus' ? '버스' : '지하철', function () { if (stop.type !== type) { stop.type = type; stop.location = ''; stop.condition = ''; renderEditor(); } });
-        choice.setAttribute('aria-pressed', String(type === stop.type)); types.appendChild(choice);
-      }); box.appendChild(types);
+      var entry = document.createElement('div'); entry.className = 'stop-fields';
+      var choice = button(stop.type === 'bus' ? '버스' : '지하철', function () {
+        stop.type = stop.type === 'bus' ? 'subway' : 'bus'; stop.location = ''; stop.condition = ''; renderEditor();
+      }); choice.className = 'type-toggle';
+      choice.setAttribute('aria-label', (stop.type === 'bus' ? '현재 버스, 지하철로 전환' : '현재 지하철, 버스로 전환'));
+      entry.appendChild(choice);
       function field(title, key, placeholder) {
-        var label = document.createElement('label'); label.textContent = title;
+        var label = document.createElement('label');
+        var caption = document.createElement('span'); caption.className = 'sr-only'; caption.textContent = title; label.appendChild(caption);
         var input = document.createElement('input'); input.value = stop[key]; input.placeholder = placeholder; input.required = true;
-        input.oninput = function () { stop[key] = input.value; }; label.appendChild(input); box.appendChild(label);
+        input.oninput = function () { stop[key] = input.value; }; label.appendChild(input); entry.appendChild(label);
       }
-      field('정류장명 또는 코드', 'location', stop.type === 'bus' ? '20726 또는 신동아정문' : '노들');
-      field('노선 및 방향', 'condition', stop.type === 'bus' ? '동작08 (여러 노선은 쉼표로 구분)' : '9호선 공항방향');
+      field('정류장명 또는 코드', 'location', stop.type === 'bus' ? '정류장명·코드' : '역명');
+      field('노선 및 방향', 'condition', stop.type === 'bus' ? '노선 (쉼표로 여러 개)' : '호선·방향');
+      box.appendChild(entry);
       container.appendChild(box);
     });
   }

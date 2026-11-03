@@ -140,6 +140,13 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(ids.settings.hidden, true);
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
   assert.equal(ids.textScale.value, 135);
+  assert.equal(ids.stopEditor.children[0].children[2].children.length, 3);
+  assert.equal(ids.stopEditor.children[0].children[2].children[0].textContent, '버스');
+  ids.stopEditor.children[0].children[2].children[0].onclick();
+  assert.equal(ids.stopEditor.children[0].children[2].children[0].textContent, '지하철');
+  ids.stopEditor.children[0].children[2].children[0].onclick();
+  assert.equal(ids.stopEditor.children[0].children[2].children[0].textContent, '버스');
+  ids.closeSettingsBtn.onclick(); ids.settingsBtn.onclick();
   ids.editTokenBtn.onclick();
   assert.equal(ids.relayToken.value, ''); assert.equal(ids.relayToken.disabled, false);
   ids.relayToken.value = 'discard-this';
@@ -342,7 +349,7 @@ test('news accepts shared video and live URLs and rejects non-YouTube or malform
     assert.equal(source.watchURL, 'https://www.youtube.com/watch?v=abcdefghijk');
     const embed = new URL(source.embedURL);
     assert.equal(embed.origin, 'https://www.youtube.com');
-    assert.equal(embed.searchParams.get('mute'), '1');
+    assert.equal(embed.searchParams.get('mute'), '0');
     assert.equal(embed.searchParams.get('autoplay'), '1');
   }
   for (const url of ['', 'javascript:alert(1)', 'http://youtube.com/watch?v=abcdefghijk',
