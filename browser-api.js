@@ -79,11 +79,11 @@
         var destination = item.title.split(/\s*-\s*/)[0];
         var key = item.line + ':' + destination + ':' + item.direction + ':' + item.via;
         var group = groups.find(function (v) { return v.key === key; });
-        if (!group) { group = { key: key, name: (item.line ? Number(item.line) - 1000 + '호선 / ' : '') + destination, items: [] }; groups.push(group); }
+        if (!group) { group = { key: key, lineName: item.line ? Number(item.line) - 1000 + '호선' : '지하철', destination: destination, name: (item.line ? Number(item.line) - 1000 + '호선' : '지하철') + destination, items: [] }; groups.push(group); }
         if (!group.items.some(function (v) { return item.trainId ? v.trainId === item.trainId : v === item; })) group.items.push(item);
       });
       if (!groups.length) {
-        rows.push({ name: (t.line ? Number(t.line) - 1000 + '호선' : '지하철') + (t.directionLabel || t.direction ? ' / ' + (t.directionLabel || t.direction) : ''), slots: [null, null], error: view.error });
+        rows.push({ lineName: t.line ? Number(t.line) - 1000 + '호선' : '지하철', destination: t.directionLabel || t.direction || '', name: (t.line ? Number(t.line) - 1000 + '호선' : '지하철') + (t.directionLabel || t.direction || ''), slots: [null, null], error: view.error });
       }
       groups.forEach(function (group) {
         var existing = rows.find(function (row) { return row.key === group.key; });
@@ -91,7 +91,7 @@
           group.items.forEach(function (item) { if (!existing.items.some(function (v) { return item.trainId ? v.trainId === item.trainId : v === item; })) existing.items.push(item); });
           existing.items.sort(function (a, b) { return a.order.localeCompare(b.order); });
           existing.slots = arrivalSlots('subway', existing.items);
-        } else rows.push({ key: group.key, name: group.name, items: group.items, slots: arrivalSlots('subway', group.items), error: '' });
+        } else rows.push({ key: group.key, name: group.name, lineName: group.lineName, destination: group.destination, items: group.items, slots: arrivalSlots('subway', group.items), error: '' });
       });
     });
     return rows;

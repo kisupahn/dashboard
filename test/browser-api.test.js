@@ -102,6 +102,8 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(cards[1].children[1].hidden, true);
   assert.equal(cards[0].className, 'transit-card bus');
   assert.equal(cards[2].className, 'transit-card subway');
+  assert.equal(cards[2].children[3].textContent, '아무데나 눌러 새로고침');
+  assert.equal(cards[0].children[3], undefined);
   for (const card of cards) assert.equal(card.children[2].children.length, 1);
   assert.equal(cards[0].children[2].children[0].children[1].children[0].textContent, '');
   assert.equal(cards[1].children[2].children[0].children[1].children[0].textContent, '3분');
@@ -197,10 +199,11 @@ test('subway groups each destination into its own two-arrival row', () => {
   items.push({ ...items[0], title: '김포공항행 - 노량진방면', trainId: '4' });
   const rows = api.routeRows([{ target: api.targets(settings)[0], items }]);
   assert.equal(rows.length, 2);
-  assert.equal(rows[0].name, '9호선 / 개화행');
+  assert.equal(rows[0].name, '9호선개화행');
+  assert.equal(rows[0].lineName, '9호선'); assert.equal(rows[0].destination, '개화행');
   assert.equal(rows[0].slots.length, 2);
   assert.equal(rows[0].slots[1].message, '2분 후');
-  assert.equal(rows[1].name, '9호선 / 김포공항행');
+  assert.equal(rows[1].name, '9호선김포공항행');
   assert.equal(rows[1].slots[1], null);
 });
 test('bus stop distances are separated from arrival times for both upcoming vehicles', () => {

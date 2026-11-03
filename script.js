@@ -41,7 +41,7 @@ updateClock(); setInterval(updateClock, 1000);
     var arrivals = document.createElement('div'); arrivals.className = 'arrivals';
     article.appendChild(cardHead); article.appendChild(status); article.appendChild(arrivals);
     $('arrivalPanels').appendChild(article);
-    var card = { target: target, views: group.targets.map(function (t) { return { target: t, items: [], pending: true, error: '' }; }), heading: heading, status: status, arrivals: arrivals, ticks: [], items: [] };
+    var card = { element: article, target: target, views: group.targets.map(function (t) { return { target: t, items: [], pending: true, error: '' }; }), heading: heading, status: status, arrivals: arrivals, ticks: [], items: [] };
     render(card);
     return card;
   }
@@ -59,7 +59,13 @@ updateClock(); setInterval(updateClock, 1000);
     card.status.hidden = !card.views.some(function (view) { return view.pending; });
     TransitAPI.routeRows(card.views).forEach(function (route) {
       var row = document.createElement('div'); row.className = 'route-row';
-      var name = document.createElement('h3'); name.className = 'route-name'; name.textContent = route.name; row.appendChild(name);
+      var name = document.createElement('h3'); name.className = 'route-name';
+      if (route.lineName) {
+        var line = document.createElement('span'); line.textContent = route.lineName;
+        var destination = document.createElement('small'); destination.className = 'destination'; destination.textContent = route.destination;
+        name.appendChild(line); name.appendChild(destination);
+      } else name.textContent = route.name;
+      row.appendChild(name);
       route.slots.forEach(function (slot, index) {
         var cell = document.createElement('div'); cell.className = 'arrival';
         cell.setAttribute('aria-label', index === 0 ? '가장 가까운 도착' : '다음 도착');
@@ -116,6 +122,12 @@ updateClock(); setInterval(updateClock, 1000);
     if (signature !== nextSignature) {
       $('arrivalPanels').textContent = '';
       cards = TransitAPI.groupTargets(targets).map(makeCard); signature = nextSignature;
+      var subwayCards = cards.filter(function (card) { return card.target.type === 'subway'; });
+      if (subwayCards.length) {
+        var last = subwayCards[subwayCards.length - 1];
+        var hint = document.createElement('p'); hint.className = 'refresh-hint'; hint.textContent = '아무데나 눌러 새로고침';
+        last.element.appendChild(hint);
+      }
     }
     var jobs = [];
     cards.forEach(function (card) {
