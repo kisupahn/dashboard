@@ -49,12 +49,12 @@
     <div class="settings-head"><h2>교통정보 설정</h2><button id="closeSettingsBtn" type="button" aria-label="설정 닫기">닫기</button></div>
     <form id="settingsForm">
       <label>지하철 인증키<input id="subwayKey" type="password" autocomplete="off"></label>
-      <label>지하철 역명 · 쉼표로 여러 개<input id="station" placeholder="강남, 서울, 사당" maxlength="500"></label>
+      <label>지하철 · 역명/호선/방향<input id="station" placeholder="노들/9/공항방향" maxlength="500"></label>
       <label>버스 인증키 (Decoding)<input id="busKey" type="password" autocomplete="off"></label>
-      <label>정류소 번호 · 쉼표로 여러 개<input id="arsId" placeholder="01001, 01002" maxlength="100"></label>
+      <label>버스 · 정류소/노선<input id="arsId" placeholder="20276/동작08, 20014/360" maxlength="100"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
-      <div class="full meta">키는 이 브라우저에만 저장합니다. 서비스별 최대 10곳 · HTTPS·CORS 지원 필요</div>
-      <div class="full"><button type="submit">저장하고 닫기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
+      <div class="full meta">여러 조건은 쉼표로 구분합니다. 호선·방향·노선을 생략하면 전체 조회합니다. 키는 이 브라우저에 저장합니다.</div>
+      <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
   <p id="refreshStatus" role="status">설정에서 키와 조회할 역·정류소를 입력하세요.</p>

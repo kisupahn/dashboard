@@ -43,7 +43,7 @@ loadMemo().catch(function () { document.getElementById('memo').textContent = '�
   'use strict';
   var storageKey = 'seoul-transit-settings-v1';
   var fields = ['subwayKey', 'station', 'busKey', 'arsId', 'interval'];
-  var settings = { subwayKey: '', station: '', busKey: '', arsId: '', interval: 60 };
+  var settings = { subwayKey: '', station: '노들/9/공항방향', busKey: '', arsId: '20276/동작08, 20014/360', interval: 60 };
   var timer, generation = 0, controllers = [];
   var $ = function (id) { return document.getElementById(id); };
   try {
@@ -64,7 +64,7 @@ loadMemo().catch(function () { document.getElementById('memo').textContent = '�
   function makeCard(target) {
     var article = document.createElement('article');
     var heading = document.createElement('h2');
-    heading.textContent = (target.type === 'subway' ? '지하철 · ' : '버스 · ') + target.value;
+    heading.textContent = TransitAPI.label(target);
     var status = document.createElement('p'); status.className = 'meta'; status.setAttribute('role', 'status');
     var arrivals = document.createElement('div');
     article.appendChild(heading); article.appendChild(status); article.appendChild(arrivals);
@@ -95,11 +95,11 @@ loadMemo().catch(function () { document.getElementById('memo').textContent = '�
       if (!response.ok) throw new Error('API HTTP 오류 (' + response.status + '). 잠시 후 다시 시도하세요.');
       var data;
       try { data = await response.json(); } catch (_) { throw new Error('JSON 응답을 받지 못했습니다. 키 승인과 API 제공기관 상태를 확인하세요.'); }
-      var items = TransitAPI.normalize(target.type, data);
+      var items = TransitAPI.filter(target.type, TransitAPI.normalize(target.type, data), target);
       if (run !== generation) return;
       render(card, items);
-      if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = '버스 · ' + items[0].stop + ' (' + target.value + ')';
-      card.status.textContent = (items.length ? '갱신 ' : '현재 도착정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
+      if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = '버스 · ' + items[0].stop + ' (' + target.value + ')' + (target.route ? ' · ' + target.route : '');
+      card.status.textContent = (items.length ? '갱신 ' : '조건에 맞는 도착정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
     } catch (error) {
       if (run !== generation) return;
       render(card, []);
@@ -146,6 +146,11 @@ loadMemo().catch(function () { document.getElementById('memo').textContent = '�
     try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = '설정을 저장했습니다.'; }
     catch (_) { $('saveStatus').textContent = '저장할 수 없어 이번 화면에서만 사용합니다.'; }
     toggle(false); refresh();
+  };
+  $('presetBtn').onclick = function () {
+    $('station').value = '노들/9/공항방향';
+    $('arsId').value = '20276/동작08, 20014/360';
+    $('saveStatus').textContent = '조회조건을 채웠습니다. 저장하고 닫기를 누르세요. 인증키는 유지됩니다.';
   };
   $('clearBtn').onclick = function () {
     settings = { subwayKey: '', station: '', busKey: '', arsId: '', interval: 60 };

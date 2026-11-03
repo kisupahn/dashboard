@@ -41,7 +41,7 @@ test('multiple cards survive one failed request; settings start collapsed', asyn
     return { children: [], hidden: false, value: '', className: '', textContent: '', appendChild(child) { this.children.push(child); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'testBtn', 'memo', 'settings', 'settingsBtn', 'subwayKey', 'busKey', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn']) ids[id] = element();
+  for (const id of ['clock', 'testBtn', 'memo', 'settings', 'settingsBtn', 'subwayKey', 'busKey', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
   ids.settings.hidden = true;
   const sandbox = vm.createContext({
     URL, AbortController, console,
@@ -65,4 +65,34 @@ test('multiple cards survive one failed request; settings start collapsed', asyn
   assert(cards[2].children[1].textContent.includes('도착정보 없음'));
   assert.equal(ids.settings.hidden, true);
   assert.equal(ids.refreshBtn.disabled, false);
+});
+test('requested presets retain only line 9 airport direction and exact bus routes', () => {
+  const targets = api.targets({ subwayKey: 's', station: '노들/9/공항방향', busKey: 'b', arsId: '20276/동작08, 20014/360' });
+  assert.equal(targets.length, 3);
+  const subway = api.normalize('subway', { realtimeArrivalList: [
+    { subwayId: '1009', updnLine: '상행', trainLineNm: '개화행', arvlMsg2: '3분 후' },
+    { subwayId: '1009', updnLine: '하행', trainLineNm: '중앙보훈병원행', arvlMsg2: '1분 후' },
+    { subwayId: '1009', updnLine: '상행', trainLineNm: '염창행', arvlMsg2: '5분 후' },
+    { subwayId: '1001', updnLine: '상행', trainLineNm: '다른 호선' },
+  ] });
+  const filtered = api.filter('subway', subway, targets[0]);
+  assert.equal(filtered.length, 2);
+  assert.equal(filtered[0].title, '개화행');
+  assert.equal(filtered[1].title, '염창행');
+  const buses = api.normalize('bus', { msgHeader: { headerCd: '0' }, msgBody: { itemList: [
+    { rtNm: '동작08', arrmsg1: '곧 도착' }, { rtNm: '동작08-1', arrmsg1: '1분 후' },
+    { rtNm: '360', arrmsg1: '2분 후' }, { rtNm: 'N360', arrmsg1: '3분 후' },
+  ] } });
+  assert.equal(api.filter('bus', buses, targets[1]).length, 1);
+  assert.equal(api.filter('bus', buses, targets[2])[0].title, '360');
+  assert.equal(targets[1].value, '20276');
+  assert.equal(targets[2].value, '20014');
+  assert(api.label(targets[0]).includes('공항방향'));
+  assert.equal(api.filter('subway', subway, { line: '1009', direction: '외선' }).length, 0);
+});
+test('same station can have separate directional conditions; invalid filters rejected', () => {
+  assert.equal(api.targets({ subwayKey: 's', station: '노들/9/상행, 노들/9/하행, 노들/9/상행' }).length, 2);
+  assert.throws(() => api.targets({ subwayKey: 's', station: '강남/2/공항방향' }));
+  assert.throws(() => api.targets({ subwayKey: 's', station: '노들/90/상행' }));
+  assert.throws(() => api.targets({ busKey: 'b', arsId: '20276/동작08/추가' }));
 });
