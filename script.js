@@ -11,19 +11,22 @@ updateClock(); setInterval(updateClock, 1000);
   var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
   var fields = ['relayUrl', 'relayToken', 'interval', 'textScale'];
-  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 30, textScale: 135 };
+  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 60, textScale: 135 };
   var timer, generation = 0, controllers = [], autoCount = 0, awaitingManual = false;
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
   try {
     var saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && typeof saved === 'object') {
-      ['relayUrl', 'relayToken', 'interval', 'textScale', 'station', 'arsId'].forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
+      ['relayUrl', 'relayToken', 'interval', 'textScale', 'refreshPolicy', 'station', 'arsId'].forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
       if (Array.isArray(saved.stops)) settings.stops = saved.stops;
     }
   } catch (_) { $('saveStatus').textContent = '저장 정보를 읽지 못했습니다. 다시 입력하세요.'; }
   if (!settings.relayUrl) settings.relayUrl = defaultRelayUrl;
-  settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 30));
+  // Apply the requested one-minute interval once to existing saved settings.
+  if (settings.refreshPolicy !== '60s-90') settings.interval = 60;
+  settings.refreshPolicy = '60s-90';
+  settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 60));
   fields.forEach(function (key) { $(key).value = settings[key]; });
   function applyTextScale(value) {
     var scale = Math.min(180, Math.max(100, Number(value) || 135));
@@ -180,6 +183,7 @@ updateClock(); setInterval(updateClock, 1000);
       $('arrivalPanels').hidden = false; $('renewNotice').hidden = true; $('refreshBtn').textContent = '갱신';
       $('refreshHint').hidden = !cards.some(function (card) { return card.target.type === 'subway'; });
     }
+    var refreshStartedAt = Date.now();
     clearTimeout(timer);
     controllers.forEach(function (controller) { controller.abort(); }); controllers = [];
     client.clear();
@@ -212,12 +216,12 @@ updateClock(); setInterval(updateClock, 1000);
     $('refreshBtn').disabled = false;
     $('refreshStatus').textContent = targets.length ? targets.length + '곳 조회 · 자동 갱신 ' + settings.interval + '초' : '설정에서 조회할 역·정류소를 추가하세요.';
     if (automatic) autoCount++;
-    if (autoCount >= 30) {
+    if (autoCount >= 90) {
       awaitingManual = true; $('arrivalPanels').hidden = true; $('renewNotice').hidden = false;
       $('refreshHint').hidden = true; $('refreshBtn').textContent = '새로고침';
       return;
     }
-    if (!document.hidden && targets.length) timer = setTimeout(function autoRefresh() { refresh(false, true); }, settings.interval * 1000);
+    if (!document.hidden && targets.length) timer = setTimeout(function autoRefresh() { refresh(false, true); }, Math.max(0, settings.interval * 1000 - (Date.now() - refreshStartedAt)));
   }
   document.addEventListener('click', function (event) {
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
@@ -228,9 +232,10 @@ updateClock(); setInterval(updateClock, 1000);
     event.preventDefault();
     var next = {};
     fields.forEach(function (key) { next[key] = String($(key).value).trim(); });
+    next.refreshPolicy = '60s-90';
     next.textScale = applyTextScale(next.textScale);
     next.stops = draft.map(function (s) { return Object.assign({}, s); });
-    next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 30));
+    next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 60));
     try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
     catch (error) { $('saveStatus').textContent = error.message; return; }
     settings = next;
@@ -242,7 +247,7 @@ updateClock(); setInterval(updateClock, 1000);
     draft = TransitAPI.migrateStops({ station: '노들/9/공항방향', arsId: '20726/동작08,20014/360' }); renderEditor();
   };
   $('clearBtn').onclick = function () {
-    settings = { relayUrl: defaultRelayUrl, relayToken: '', stops: [], interval: 30, textScale: 135 };
+    settings = { relayUrl: defaultRelayUrl, relayToken: '', stops: [], interval: 60, textScale: 135, refreshPolicy: '60s-90' };
     fields.forEach(function (key) { $(key).value = settings[key]; });
     applyTextScale(settings.textScale); editStops();
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = ''; }

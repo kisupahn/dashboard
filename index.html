@@ -73,8 +73,8 @@
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <button id="fullscreenBtn" type="button">전체화면 전환</button>
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
-      <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="30" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.10</small></details>
+      <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.11</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -82,11 +82,11 @@
   <p id="saveStatus" role="status"></p>
   <p id="emptyState">설정에서 조회할 곳을 추가하세요.</p>
   <main class="panels" id="arrivalPanels"></main>
-  <button id="renewNotice" class="renew-notice" type="button" hidden>새로고침</button>
+  <button id="renewNotice" class="renew-notice" type="button" hidden>아무데나 눌러서 새로고침</button>
   <p id="refreshHint" class="refresh-hint" hidden>아무데나 눌러 새로고침</p>
 
-  <script src="route-catalog.js?v=20261103.10"></script>
-  <script src="browser-api.js?v=20261103.10"></script>
-  <script src="script.js?v=20261103.10"></script>
+  <script src="route-catalog.js?v=20261103.11"></script>
+  <script src="browser-api.js?v=20261103.11"></script>
+  <script src="script.js?v=20261103.11"></script>
 </body>
 </html>

@@ -77,13 +77,13 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   }
   const ids = {};
   for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue']) ids[id] = element();
-  ids.settings.hidden = true;
+  ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
   let fullscreenCalls = 0;
   const ctx = setup({
     document: { hidden: false, documentElement: { style: { setProperty(key, value) { this[key] = value; } }, requestFullscreen: async () => { fullscreenCalls++; } }, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
-    localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
+    localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 30 }), setItem(k, v) { stored = JSON.parse(v); } },
     setTimeout: (fn, ms) => { const task = { fn, ms, cleared: false }; timers.push(task); return task; }, clearTimeout(task) { if (task) task.cleared = true; }, setInterval: () => 0,
     fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply({ ok: true, data: busBody }); },
   });
@@ -112,13 +112,14 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(cards[1].children[2].children[0].children[1].children[0].textContent, '3분 0초');
   assert.equal(cards[1].children[2].children[0].children[2].children[0].textContent, '10분 0초');
   assert.equal(cards[1].children[2].children[0].children.length, 3);
-  // Thirty scheduled automatic cycles retain the current card until the fresh response arrives.
+  // Ninety scheduled automatic cycles retain the current card until the fresh response arrives.
   const oldRow = cards[1].children[2].children[0];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 90; i++) {
     const timer = timers.findLast(t => !t.cleared && t.fn.name === 'autoRefresh');
-    assert(timer); timer.cleared = true; timer.fn();
+    assert(timer); assert(timer.ms > 59000 && timer.ms <= 60000); timer.cleared = true; timer.fn();
     if (i === 0) assert.equal(cards[1].children[2].children[0], oldRow);
     await new Promise(resolve => setImmediate(resolve));
+    if (i < 89) assert.equal(ids.renewNotice.hidden, true);
   }
   assert.equal(ids.arrivalPanels.hidden, true);
   assert.equal(ids.renewNotice.hidden, false);
@@ -143,7 +144,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   await ids.fullscreenBtn.onclick(); assert.equal(fullscreenCalls, 1);
   ids.settingsForm.onsubmit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 60); assert.equal(stored.textScale, 160);
+  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 60); assert.equal(stored.refreshPolicy, '60s-90'); assert.equal(stored.textScale, 160);
   assert.equal(ctx.document.documentElement.style['--text-scale'], '1.6');
   assert.equal(stored.stops[0].location, '20014');
   assert.equal(stored.stops[1].location, '20276');
