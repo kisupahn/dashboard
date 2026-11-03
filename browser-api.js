@@ -53,8 +53,48 @@
         var primary = position ? message.replace(position[0], '').replace(/\s*[\[(]\s*[\])]\s*/g, '').trim() : message;
         slots.push(available ? { message: primary, label: label } : null);
       });
-    } else slots = items.slice(0, 3).map(function (item) { return { item: item, label: item.title.split(/\s*-\s*/)[0], message: item.message }; });
-    return [slots[0] || null, slots[1] || null, slots[2] || null];
+    } else slots = items.slice(0, 2).map(function (item) { return { item: item, label: item.title.split(/\s*-\s*/)[0], message: item.message }; });
+    return [slots[0] || null, slots[1] || null];
+  }
+  function groupTargets(targets) {
+    var groups = [];
+    targets.forEach(function (target) {
+      var key = target.type + ':' + target.value;
+      var group = groups.find(function (v) { return v.key === key; });
+      if (!group) { group = { key: key, type: target.type, value: target.value, targets: [] }; groups.push(group); }
+      group.targets.push(target);
+    });
+    return groups.sort(function (a, b) { return (a.type === 'bus' ? 0 : 1) - (b.type === 'bus' ? 0 : 1); });
+  }
+  function routeRows(views) {
+    var rows = [];
+    views.forEach(function (view) {
+      var t = view.target;
+      if (t.type === 'bus') {
+        rows.push({ name: view.items[0] ? view.items[0].title : t.route, slots: arrivalSlots('bus', view.items), error: view.error });
+        return;
+      }
+      var groups = [];
+      view.items.forEach(function (item) {
+        var destination = item.title.split(/\s*-\s*/)[0];
+        var key = item.line + ':' + destination + ':' + item.direction + ':' + item.via;
+        var group = groups.find(function (v) { return v.key === key; });
+        if (!group) { group = { key: key, name: (item.line ? Number(item.line) - 1000 + '호선 / ' : '') + destination, items: [] }; groups.push(group); }
+        if (!group.items.some(function (v) { return item.trainId ? v.trainId === item.trainId : v === item; })) group.items.push(item);
+      });
+      if (!groups.length) {
+        rows.push({ name: (t.line ? Number(t.line) - 1000 + '호선' : '지하철') + (t.directionLabel || t.direction ? ' / ' + (t.directionLabel || t.direction) : ''), slots: [null, null], error: view.error });
+      }
+      groups.forEach(function (group) {
+        var existing = rows.find(function (row) { return row.key === group.key; });
+        if (existing) {
+          group.items.forEach(function (item) { if (!existing.items.some(function (v) { return item.trainId ? v.trainId === item.trainId : v === item; })) existing.items.push(item); });
+          existing.items.sort(function (a, b) { return a.order.localeCompare(b.order); });
+          existing.slots = arrivalSlots('subway', existing.items);
+        } else rows.push({ key: group.key, name: group.name, items: group.items, slots: arrivalSlots('subway', group.items), error: '' });
+      });
+    });
+    return rows;
   }
   function normalize(type, data) {
     if (!data || typeof data !== 'object') throw error('API 응답 형식이 올바르지 않습니다.');
@@ -203,5 +243,5 @@
       clear: function () { cache.clear(); }
     };
   }
-  root.TransitAPI = { targets: targets, label: label, arrivalSlots: arrivalSlots, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
+  root.TransitAPI = { targets: targets, label: label, groupTargets: groupTargets, routeRows: routeRows, arrivalSlots: arrivalSlots, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
 })(typeof window !== 'undefined' ? window : globalThis);

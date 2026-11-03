@@ -79,8 +79,9 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
   ids.settings.hidden = true;
   let stored;
+  const events = {};
   const ctx = setup({
-    document: { hidden: false, getElementById: id => ids[id], createElement: element, addEventListener() {}, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
+    document: { hidden: false, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
     localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
     setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
     fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply({ ok: true, data: busBody }); },
@@ -96,16 +97,21 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(cards[0].children[0].children[1].textContent, '20276');
   assert.equal(cards[1].children[0].children[1].textContent, '노들역');
   assert.equal(cards[2].children[0].children[1].textContent, '노들역');
-  assert.equal(cards[2].children[1].className, 'error');
-  assert.equal(cards[1].children[0].children[2].textContent, '360');
+  assert.equal(cards[2].children[2].children[0].children[3].className, 'error route-error');
+  assert.equal(cards[1].children[2].children[0].children[0].textContent, '360');
   assert.equal(cards[1].children[1].hidden, true);
   assert.equal(cards[0].className, 'transit-card bus');
   assert.equal(cards[2].className, 'transit-card subway');
-  for (const card of cards) assert.equal(card.children[2].children.length, 3);
-  assert.equal(cards[0].children[2].children[0].children[0].textContent, '');
-  assert.equal(cards[1].children[2].children[0].children[0].textContent, '3분');
-  assert.equal(cards[1].children[2].children[1].children[0].textContent, '10분');
-  assert.equal(cards[1].children[2].children[2].children[0].textContent, '');
+  for (const card of cards) assert.equal(card.children[2].children.length, 1);
+  assert.equal(cards[0].children[2].children[0].children[1].children[0].textContent, '');
+  assert.equal(cards[1].children[2].children[0].children[1].children[0].textContent, '3분');
+  assert.equal(cards[1].children[2].children[0].children[2].children[0].textContent, '10분');
+  assert.equal(cards[1].children[2].children[0].children.length, 3);
+  events.click({ target: { closest: () => true } });
+  assert.equal(ids.refreshBtn.disabled, false);
+  events.click({ target: { closest: () => null } });
+  assert.equal(ids.refreshBtn.disabled, true);
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(ids.settings.hidden, true);
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
   ids.settingsForm.onsubmit({ preventDefault() {} });
@@ -176,24 +182,26 @@ test('access code has no minimum length but must be nonempty', () => {
   assert.equal(new URL(api.relayURL(api.targets(settings)[2], { ...connection, relayToken: 'a' })).searchParams.get('token'), 'a');
   assert.throws(() => api.relayURL(api.targets(settings)[2], { ...connection, relayToken: '' }), { code: 'CONFIG' });
 });
-test('three arrival slots use actual bus vehicles only and leave missing slots blank', () => {
+test('two arrival slots use actual bus vehicles only and leave missing slots blank', () => {
   const rows = api.normalize('bus', busBody);
   const slots = api.arrivalSlots('bus', rows);
-  assert.equal(slots.length, 3);
+  assert.equal(slots.length, 2);
   assert.equal(slots[0].message, '3분 후');
   assert.equal(slots[1].message, '10분 후');
-  assert.equal(slots[2], null);
   const absent = api.arrivalSlots('bus', [{ message: '운행종료', secondMessage: '' }]);
-  assert.equal(absent[0], null); assert.equal(absent[1], null); assert.equal(absent[2], null);
+  assert.equal(absent[0], null); assert.equal(absent[1], null);
   assert.equal(api.label({ type: 'bus', value: '20726', route: '동작08' }), '신동아정문');
 });
-test('subway keeps three arrivals and pads an incomplete list without inventing data', () => {
-  const rows = [1, 2, 3, 4].map(n => ({ title: '개화행 - 노량진방면', message: n + '분 후' }));
-  const slots = api.arrivalSlots('subway', rows);
-  assert.equal(slots.length, 3); assert.equal(slots[2].message, '3분 후');
-  assert.equal(slots[0].label, '개화행');
-  const sparse = api.arrivalSlots('subway', rows.slice(0, 1));
-  assert.equal(sparse[1], null); assert.equal(sparse[2], null);
+test('subway groups each destination into its own two-arrival row', () => {
+  const items = [1, 2, 3].map(n => ({ line: '1009', title: '개화행 - 노량진방면', direction: '상행', via: '노량진', message: n + '분 후', trainId: String(n) }));
+  items.push({ ...items[0], title: '김포공항행 - 노량진방면', trainId: '4' });
+  const rows = api.routeRows([{ target: api.targets(settings)[0], items }]);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].name, '9호선 / 개화행');
+  assert.equal(rows[0].slots.length, 2);
+  assert.equal(rows[0].slots[1].message, '2분 후');
+  assert.equal(rows[1].name, '9호선 / 김포공항행');
+  assert.equal(rows[1].slots[1], null);
 });
 test('bus stop distances are separated from arrival times for both upcoming vehicles', () => {
   const [first, second, third] = api.arrivalSlots('bus', [{ message: '3분20초후[2번째 전]', secondMessage: '8분후 (5번째전)' }]);
@@ -201,8 +209,19 @@ test('bus stop distances are separated from arrival times for both upcoming vehi
   assert.equal(first.label, '2번째 전');
   assert.equal(second.message, '8분후');
   assert.equal(second.label, '5번째 전');
-  assert.equal(third, null);
+  assert.equal(third, undefined);
   const [soon] = api.arrivalSlots('bus', [{ message: '곧 도착[1번째전]', secondMessage: '' }]);
   assert.equal(soon.message, '곧 도착'); assert.equal(soon.label, '1번째 전');
   assert.equal(api.arrivalSlots('bus', [{ message: '4분 후' }])[0].label, '');
+});
+test('same stop combines multiple routes while different stop IDs and transport types remain separate', () => {
+  const targets = api.targets({ station: '노들/9/공항방향', arsId: '20726/동작08, 20014/360, 20014/동작08' });
+  const groups = api.groupTargets(targets);
+  assert.equal(groups.length, 3);
+  assert.equal(groups[0].value, '20726');
+  assert.equal(groups[1].targets.length, 2);
+  assert.equal(groups[2].type, 'subway');
+  const rows = api.routeRows(groups[1].targets.map(target => ({ target, items: [], pending: true, error: '' })));
+  assert.equal(rows.length, 2); assert.equal(rows[0].name, '360'); assert.equal(rows[1].name, '동작08');
+  assert.equal(rows[0].slots.length, 2); assert.equal(rows[0].slots[0], null);
 });
