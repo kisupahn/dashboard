@@ -148,3 +148,12 @@ test('manual relay query requests cache bypass and detects an old deployed relay
   const upgraded = api.createClient(async () => reply({ ok: true, data: busBody, capabilities: { forceRefresh: true }, cacheBypass: true }));
   assert.equal((await upgraded.load(t, { ...connection, forceRefresh: true })).relayInfo.cacheBypass, true);
 });
+test('diagnostic exposes conflicting source estimates without changing either input', () => {
+  const [item] = api.normalize('subway', { realtimeArrivalList: [{ btrainNo: '9012', trainLineNm: '개화행 - 노량진방면', arvlMsg2: '8분 35초 후 (구반포)', barvlDt: '335', recptnDt: '2026-11-03 21:13:30', arvlCd: '99' }] });
+  const text = api.diagnostic(item, Date.parse('2026-11-03T21:15:14+09:00'));
+  assert(text.includes('열차번호: 9012'));
+  assert(text.includes('원본 시간값(barvlDt): 335초'));
+  assert(text.includes('현재 화면 계산: 약 3분 51초 후'));
+  assert(text.includes('원본 안내문으로 계산: 약 6분 51초 후'));
+  assert.equal(item.message, '8분 35초 후 (구반포)');
+});

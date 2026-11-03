@@ -41,13 +41,22 @@ updateClock(); setInterval(updateClock, 1000);
       var title = document.createElement('strong'); title.textContent = item.title;
       var message = document.createElement('p'); message.title = 'API 원본: ' + item.message;
       var detail = document.createElement('small');
+      var inspection, raw;
+      if (item.kind === 'subway') {
+        inspection = document.createElement('details'); inspection.className = 'inspection';
+        var summary = document.createElement('summary'); summary.textContent = '원본 · 계산 확인';
+        raw = document.createElement('pre');
+        inspection.appendChild(summary); inspection.appendChild(raw);
+      }
       function tick() {
         var display = TransitAPI.presentation(item, Date.now());
         message.textContent = display.message;
+        if (raw) raw.textContent = TransitAPI.diagnostic(item, Date.now());
         detail.textContent = item.detail + (item.sourceTime ? ' · API 생성 ' + item.sourceTime : ' · API 생성 시각 미제공') + (display.note ? ' · ' + display.note : '');
       }
       tick(); if (item.kind === 'subway') card.ticks.push(tick);
       row.appendChild(title); row.appendChild(message); row.appendChild(detail);
+      if (inspection) row.appendChild(inspection);
       card.arrivals.appendChild(row);
     });
   }

@@ -50,7 +50,7 @@
       return data.realtimeArrivalList.map(function (v) {
         var lineName = String(v.trainLineNm || '');
         var match = lineName.match(/-\s*(.*?)\s*방면(?:\s*\([^)]*\))?\s*$/);
-        return { kind: 'subway', arrivalCode: String(v.arvlCd || ''), arrivalSeconds: /^\d+$/.test(String(v.barvlDt)) && Number(v.barvlDt) > 0 ? Number(v.barvlDt) : null, title: lineName || String(v.bstatnNm || '지하철'), message: String(v.arvlMsg2 || '안내 없음'), detail: String(v.arvlMsg3 || ''), line: String(v.subwayId || ''), station: String(v.statnNm || ''), direction: String(v.updnLine || ''), via: match ? match[1].trim() : '', sourceTime: String(v.recptnDt || ''), order: String(v.ordkey || '') };
+        return { kind: 'subway', trainId: String(v.btrainNo || ''), rawArrivalSeconds: v.barvlDt == null ? '' : String(v.barvlDt), arrivalCode: String(v.arvlCd || ''), arrivalSeconds: /^\d+$/.test(String(v.barvlDt)) && Number(v.barvlDt) > 0 ? Number(v.barvlDt) : null, title: lineName || String(v.bstatnNm || '지하철'), message: String(v.arvlMsg2 || '안내 없음'), detail: String(v.arvlMsg3 || ''), line: String(v.subwayId || ''), station: String(v.statnNm || ''), direction: String(v.updnLine || ''), via: match ? match[1].trim() : '', sourceTime: String(v.recptnDt || ''), order: String(v.ordkey || '') };
       });
     }
     var code = String((data.msgHeader || {}).headerCd);
@@ -87,6 +87,24 @@
     var remaining = seconds - age;
     if (remaining <= 0) return { message: '예정 시각 경과 · 새 정보 대기', note: ageNote + ' · 실제 도착 여부 미확인' };
     return { message: '약 ' + Math.floor(remaining / 60) + '분 ' + remaining % 60 + '초 후', note: ageNote + ' · 경과시간을 반영한 추정' };
+  }
+  function diagnostic(item, now) {
+    var display = presentation(item, now);
+    var fromMessage = presentation(Object.assign({}, item, { arrivalSeconds: null }), now);
+    return [
+      '확인 시각: ' + new Date(now).toISOString(),
+      '열차번호: ' + (item.trainId || '미제공'),
+      '열차/방면: ' + item.title,
+      'API 방향 코드: ' + (item.direction || '미제공'),
+      '도착 코드(arvlCd): ' + (item.arrivalCode || '미제공'),
+      'API 생성(한국 시각): ' + (item.sourceTime || '미제공'),
+      '원본 시간값(barvlDt): ' + (item.rawArrivalSeconds || '미제공') + '초',
+      '원본 안내(arvlMsg2): ' + item.message,
+      '추가 안내(arvlMsg3): ' + item.detail,
+      '순서(ordkey): ' + (item.order || '미제공'),
+      '현재 화면 계산: ' + display.message,
+      '원본 안내문으로 계산: ' + fromMessage.message
+    ].join('\n');
   }
   function relayURL(target, connection) {
     if (!connection || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(connection.relayUrl || '')) throw error('설정에 Apps Script 웹 앱 주소(/exec)를 입력하세요.', 'CONFIG');
@@ -169,5 +187,5 @@
       clear: function () { cache.clear(); }
     };
   }
-  root.TransitAPI = { targets: targets, label: label, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation };
+  root.TransitAPI = { targets: targets, label: label, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
 })(typeof window !== 'undefined' ? window : globalThis);
