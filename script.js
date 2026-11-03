@@ -13,7 +13,7 @@ updateClock(); setInterval(updateClock, 1000);
     var saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && typeof saved === 'object') fields.forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
   } catch (_) { $('saveStatus').textContent = '저장 정보를 읽지 못했습니다. 다시 입력하세요.'; }
-  settings.interval = Math.min(3600, Math.max(180, Number(settings.interval) || 180));
+  settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 180));
   fields.forEach(function (key) { $(key).value = settings[key]; });
   function toggle(open) {
     $('settings').hidden = !open;
@@ -51,17 +51,18 @@ updateClock(); setInterval(updateClock, 1000);
       card.arrivals.appendChild(row);
     });
   }
-  async function load(target, card, run) {
+  async function load(target, card, run, force) {
     if (run !== generation) return;
     card.status.textContent = '조회 중…'; card.status.className = 'meta';
     var controller = new AbortController(); controllers.push(controller);
     var timeout = setTimeout(function () { controller.abort(); }, 40000);
     try {
-      var items = await client.load(target, settings, controller.signal);
+      var items = await client.load(target, Object.assign({}, settings, { forceRefresh: force }), controller.signal);
       if (run !== generation) return;
       render(card, target.type === 'subway' ? items.slice(0, 2) : items);
       if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = '버스 · ' + items[0].stop + ' (' + target.value + ')' + (target.route ? ' · ' + target.route : '');
-      card.status.textContent = (items.length ? '갱신 ' : '조건 일치 정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
+      card.status.textContent = (items.length ? '조회 ' : '조건 일치 정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
+      if (force) card.status.textContent += items.relayInfo && items.relayInfo.cacheBypass ? ' · 원천 재조회 완료' : ' · 중계 업데이트 필요: 캐시 우회 미지원';
     } catch (error) {
       if (run !== generation) return;
       render(card, []);
@@ -70,7 +71,7 @@ updateClock(); setInterval(updateClock, 1000);
   }
   var cards = [], signature = '';
   setInterval(function () { cards.forEach(function (card) { card.ticks.forEach(function (tick) { tick(); }); }); }, 1000);
-  async function refresh() {
+  async function refresh(force) {
     clearTimeout(timer);
     controllers.forEach(function (controller) { controller.abort(); }); controllers = [];
     client.clear();
@@ -90,7 +91,7 @@ updateClock(); setInterval(updateClock, 1000);
     async function worker() {
       while (cursor < targets.length && run === generation) {
         var index = cursor++;
-        await load(targets[index], cards[index], run);
+        await load(targets[index], cards[index], run, force === true);
       }
     }
     await Promise.all([worker(), worker(), worker()]);
@@ -99,12 +100,12 @@ updateClock(); setInterval(updateClock, 1000);
     $('refreshStatus').textContent = targets.length ? targets.length + '곳 조회 · 자동 갱신 ' + settings.interval + '초' : '설정에서 조회할 역·정류소를 추가하세요.';
     if (!document.hidden && targets.length) timer = setTimeout(refresh, settings.interval * 1000);
   }
-  $('refreshBtn').onclick = refresh;
+  $('refreshBtn').onclick = function () { refresh(true); };
   $('settingsForm').onsubmit = function (event) {
     event.preventDefault();
     var next = {};
     fields.forEach(function (key) { next[key] = String($(key).value).trim(); });
-    next.interval = Math.min(3600, Math.max(180, Number(next.interval) || 180));
+    next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 180));
     try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
     catch (error) { $('saveStatus').textContent = error.message; return; }
     settings = next;

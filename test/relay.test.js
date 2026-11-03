@@ -51,3 +51,11 @@ test('provider errors are sanitized; not cached; service end remains distinct', 
   const ended = relay({ props, body: { msgHeader: { headerCd: '8' } } });
   assert.equal(decode(ended.get(p)).error.code, 'SERVICE_ENDED');
 });
+test('manual refresh bypasses cached API data while automatic requests share it', () => {
+  const app = relay({ props, body: { msgHeader: { headerCd: '0' }, msgBody: { itemList: [] } } });
+  const p = { ...params, type: 'bus', routeId: '100100057' };
+  app.get(p); app.get(p); assert.equal(app.calls.length, 1);
+  const manual = decode(app.get({ ...p, refresh: '1' }));
+  assert.equal(manual.cacheBypass, true); assert.equal(app.calls.length, 2);
+  app.get(p); assert.equal(app.calls.length, 2);
+});

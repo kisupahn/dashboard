@@ -15,7 +15,7 @@ function doGet(e) {
     var token = props.getProperty('DASHBOARD_TOKEN');
     if (!token || token.length < 16 || p.token !== token) throw relayError_('AUTH', '중계 접속 코드가 일치하지 않습니다.');
     if (p.type === 'health') {
-      result = { ok: true, version: 1, configured: { subway: !!props.getProperty('SEOUL_SUBWAY_API_KEY'), bus: !!props.getProperty('SEOUL_BUS_API_KEY') } };
+      result = { ok: true, version: 2, configured: { subway: !!props.getProperty('SEOUL_SUBWAY_API_KEY'), bus: !!props.getProperty('SEOUL_BUS_API_KEY') } };
     } else {
       var key, url, cacheKey;
       if (p.type === 'subway') {
@@ -33,7 +33,7 @@ function doGet(e) {
       // 키가 바뀌면 이전 키의 캐시도 공유하지 않습니다.
       cacheKey += ':' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, key));
       var cache = CacheService.getScriptCache();
-      var cached = cache.get(cacheKey);
+      var cached = p.refresh === '1' ? null : cache.get(cacheKey);
       if (cached) result = JSON.parse(cached);
       else {
         var response;
@@ -57,11 +57,15 @@ function doGet(e) {
         }
         result = { ok: true, data: data, fetchedAt: new Date().toISOString() };
         var encoded = JSON.stringify(result);
-        if (encoded.length < 45000) cache.put(cacheKey, encoded, 150);
+        if (encoded.length < 45000) cache.put(cacheKey, encoded, 20);
       }
     }
   } catch (err) {
     result = { ok: false, error: { code: err.relayCode || 'INTERNAL', message: err.relayCode ? err.message : '중계 설정 또는 실행 오류가 발생했습니다.' } };
+  }
+  if (result.ok) {
+    result.capabilities = { forceRefresh: true };
+    result.cacheBypass = p.refresh === '1';
   }
   var output = JSON.stringify(result).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
   return ContentService.createTextOutput(callback ? callback + '(' + output + ');' : output)

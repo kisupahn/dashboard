@@ -95,7 +95,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
   ids.settingsForm.onsubmit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 180);
+  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 60);
   assert.equal(ids.settings.hidden, true); assert.equal(ids.refreshBtn.disabled, false);
 });
 test('relay URL contains no provider keys and rejects non-deployment addresses', () => {
@@ -137,4 +137,14 @@ test('already departed trains cannot occupy the two next-arrival positions', () 
   ] });
   assert.equal(api.filter('subway', rows, target).length, 1);
   assert.equal(api.filter('subway', rows, target)[0].arrivalCode, '3');
+});
+test('manual relay query requests cache bypass and detects an old deployed relay', async () => {
+  const t = api.targets(settings)[2];
+  let requested;
+  const client = api.createClient(async url => { requested = new URL(url); return reply({ ok: true, data: busBody }); });
+  const rows = await client.load(t, { ...connection, forceRefresh: true });
+  assert.equal(requested.searchParams.get('refresh'), '1');
+  assert.equal(rows.relayInfo.cacheBypass, false);
+  const upgraded = api.createClient(async () => reply({ ok: true, data: busBody, capabilities: { forceRefresh: true }, cacheBypass: true }));
+  assert.equal((await upgraded.load(t, { ...connection, forceRefresh: true })).relayInfo.cacheBypass, true);
 });

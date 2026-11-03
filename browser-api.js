@@ -94,6 +94,7 @@
     var url = new URL(connection.relayUrl);
     url.searchParams.set('type', target.type);
     url.searchParams.set('token', connection.relayToken);
+    if (connection.forceRefresh === true) url.searchParams.set('refresh', '1');
     if (target.type === 'subway') url.searchParams.set('station', target.value);
     else if (target.type === 'bus') url.searchParams.set('routeId', target.routeId);
     return url.href;
@@ -132,9 +133,14 @@
       async load(target, key, signal) {
         var type = target.type;
         var url = relayURL(target, key);
+        function select(rows) {
+          var selected = filter(type, rows, target);
+          selected.relayInfo = rows.relayInfo;
+          return selected;
+        }
         var hit = cache.get(url);
-        if (hit && Date.now() - hit.time < 15000) return filter(type, hit.rows, target);
-        if (hit && hit.pending) return filter(type, await hit.pending, target);
+        if (!key.forceRefresh && hit && Date.now() - hit.time < 15000) return select(hit.rows);
+        if (hit && hit.pending) return select(await hit.pending);
         var task = (async function () {
           var res;
           try { res = await fetchImpl(url, { signal: signal, credentials: 'omit', referrerPolicy: 'no-referrer' }); }
@@ -142,11 +148,14 @@
           if (!res.ok) throw error('제공기관 HTTP 오류 (' + res.status + ')', 'HTTP');
           var data;
           try { data = await res.json(); } catch (_) { throw error('JSON 응답이 아닙니다. 키 승인과 제공기관 상태를 확인하세요.', 'FORMAT'); }
+          var envelope = data;
           {
             if (!data || !data.ok) throw error(data && data.error ? data.error.message : '중계 응답 오류', data && data.error ? data.error.code : 'FORMAT');
             data = data.data;
           }
-          return normalize(type, data);
+          var rows = normalize(type, data);
+          rows.relayInfo = { forceSupported: !!(envelope.capabilities && envelope.capabilities.forceRefresh), cacheBypass: envelope.cacheBypass === true, fetchedAt: envelope.fetchedAt || '' };
+          return rows;
         })();
         var entry = { pending: task };
         cache.set(url, entry);
@@ -154,7 +163,7 @@
           var rows = await task;
           if (cache.size > 100) cache.delete(cache.keys().next().value);
           if (cache.get(url) === entry) cache.set(url, { rows: rows, time: Date.now() });
-          return filter(type, rows, target);
+          return select(rows);
         } catch (e) { if (cache.get(url) === entry) cache.delete(url); throw e; }
       },
       clear: function () { cache.clear(); }
