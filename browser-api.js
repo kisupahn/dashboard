@@ -32,5 +32,21 @@
       return { title: item.rtNm || '버스', message: item.arrmsg1 || '정보 없음', detail: item.arrmsg2 || '', stop: item.stNm || '' };
     });
   }
-  root.TransitAPI = { buildURL: buildURL, normalize: normalize };
+  function targets(settings) {
+    var result = [];
+    ['subway', 'bus'].forEach(function (type) {
+      var key = type === 'subway' ? settings.subwayKey : settings.busKey;
+      var input = String((type === 'subway' ? settings.station : settings.arsId) || '');
+      var values = input.split(/[,，\n]+/).map(function (v) { return v.trim(); }).filter(Boolean);
+      values = values.filter(function (v, i) { return values.indexOf(v) === i; });
+      if (values.length > 10) throw new Error('서비스별로 최대 10곳까지 설정할 수 있습니다.');
+      values.forEach(function (value) {
+        if (type === 'bus' && !/^\d{5}$/.test(value)) throw new Error('정류소 번호는 각각 5자리 숫자로 입력하세요.');
+        if (type === 'subway' && value.length > 50) throw new Error('역명은 각각 50자 이내로 입력하세요.');
+        if (key) result.push({ type: type, value: value });
+      });
+    });
+    return result;
+  }
+  root.TransitAPI = { buildURL: buildURL, normalize: normalize, targets: targets };
 })(typeof window !== 'undefined' ? window : globalThis);

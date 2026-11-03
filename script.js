@@ -55,74 +55,105 @@ loadMemo().catch(function () { document.getElementById('memo').textContent = '�
   function toggle(open) {
     $('settings').hidden = !open;
     $('settingsBtn').setAttribute('aria-expanded', String(open));
+    if (open) $('subwayKey').focus();
+    else $('settingsBtn').focus();
   }
   $('settingsBtn').onclick = function () { toggle($('settings').hidden); };
-  function render(type, items) {
-    var target = $(type + 'Arrivals'); target.textContent = '';
+  $('closeSettingsBtn').onclick = function () { toggle(false); };
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !$('settings').hidden) toggle(false); });
+  function makeCard(target) {
+    var article = document.createElement('article');
+    var heading = document.createElement('h2');
+    heading.textContent = (target.type === 'subway' ? '지하철 · ' : '버스 · ') + target.value;
+    var status = document.createElement('p'); status.className = 'meta'; status.setAttribute('role', 'status');
+    var arrivals = document.createElement('div');
+    article.appendChild(heading); article.appendChild(status); article.appendChild(arrivals);
+    $('arrivalPanels').appendChild(article);
+    return { heading: heading, status: status, arrivals: arrivals };
+  }
+  function render(card, items) {
+    card.arrivals.textContent = '';
     items.forEach(function (item) {
       var row = document.createElement('div'); row.className = 'arrival';
       [['strong', item.title], ['p', item.message], ['small', item.detail]].forEach(function (pair) {
         var node = document.createElement(pair[0]); node.textContent = pair[1]; row.appendChild(node);
       });
-      target.appendChild(row);
+      card.arrivals.appendChild(row);
     });
   }
-  async function load(type, run) {
-    var status = $(type + 'Status');
-    var key = type === 'subway' ? settings.subwayKey : settings.busKey;
-    if (!key) { render(type, []); status.textContent = '설정에서 인증키를 입력하세요.'; status.className = 'meta'; return; }
-    status.textContent = '조회 중…'; status.className = 'meta';
+  async function load(target, card, run) {
+    if (run !== generation) return;
+    card.status.textContent = '조회 중…'; card.status.className = 'meta';
     var controller = new AbortController(); controllers.push(controller);
     var timeout = setTimeout(function () { controller.abort(); }, 12000);
     try {
-      var url = TransitAPI.buildURL(type, settings);
+      var query = { subwayKey: settings.subwayKey, busKey: settings.busKey, station: target.value, arsId: target.value };
+      var url = TransitAPI.buildURL(target.type, query);
       var response;
       try { response = await fetch(url, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' }); }
-      catch (_) { throw new Error('직접 연결 실패: HTTPS·CORS 차단, 네트워크 또는 응답 지연일 수 있습니다. 키 노출 허용만으로 브라우저 차단이 해제되지는 않습니다.'); }
+      catch (_) { throw new Error('직접 연결 실패: HTTPS·CORS 차단, 네트워크 또는 응답 지연일 수 있습니다.'); }
       if (!response.ok) throw new Error('API HTTP 오류 (' + response.status + '). 잠시 후 다시 시도하세요.');
       var data;
       try { data = await response.json(); } catch (_) { throw new Error('JSON 응답을 받지 못했습니다. 키 승인과 API 제공기관 상태를 확인하세요.'); }
-      var items = TransitAPI.normalize(type, data);
+      var items = TransitAPI.normalize(target.type, data);
       if (run !== generation) return;
-      render(type, items);
-      if (type === 'bus' && items[0] && items[0].stop) $('busTitle').textContent = '버스 · ' + items[0].stop;
-      status.textContent = (items.length ? '갱신 ' : '현재 도착정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
+      render(card, items);
+      if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = '버스 · ' + items[0].stop + ' (' + target.value + ')';
+      card.status.textContent = (items.length ? '갱신 ' : '현재 도착정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
     } catch (error) {
       if (run !== generation) return;
-      render(type, []); // 오래된 정보를 현재 도착정보처럼 보여주지 않습니다.
-      status.textContent = error.message; status.className = 'error';
+      render(card, []);
+      card.status.textContent = error.message; card.status.className = 'error';
     } finally { clearTimeout(timeout); }
   }
+  var cards = [], signature = '';
   async function refresh() {
     clearTimeout(timer);
     controllers.forEach(function (controller) { controller.abort(); }); controllers = [];
-    var run = ++generation;
-    $('subwayTitle').textContent = '지하철' + (settings.station ? ' · ' + settings.station : '');
-    $('busTitle').textContent = '버스' + (settings.arsId ? ' · ' + settings.arsId : '');
+    var run = ++generation, targets;
+    try { targets = TransitAPI.targets(settings); }
+    catch (error) { $('saveStatus').textContent = error.message; $('refreshBtn').disabled = false; return; }
+    var nextSignature = JSON.stringify(targets);
+    if (signature !== nextSignature) {
+      $('arrivalPanels').textContent = '';
+      cards = targets.map(makeCard); signature = nextSignature;
+    }
+    $('emptyState').hidden = targets.length > 0;
     $('refreshBtn').disabled = true;
-    await Promise.all([load('subway', run), load('bus', run)]);
+    // 여러 곳을 조회해도 동시 API 요청은 3건으로 제한합니다.
+    var cursor = 0;
+    async function worker() {
+      while (cursor < targets.length && run === generation) {
+        var index = cursor++;
+        await load(targets[index], cards[index], run);
+      }
+    }
+    await Promise.all([worker(), worker(), worker()]);
     if (run !== generation) return;
     $('refreshBtn').disabled = false;
-    $('refreshStatus').textContent = '자동 갱신 ' + settings.interval + '초 · API 직접 조회';
-    if (!document.hidden) timer = setTimeout(refresh, settings.interval * 1000);
+    $('refreshStatus').textContent = targets.length ? targets.length + '곳 조회 · 자동 갱신 ' + settings.interval + '초' : '설정에서 조회할 역·정류소를 추가하세요.';
+    if (!document.hidden && targets.length) timer = setTimeout(refresh, settings.interval * 1000);
   }
   $('refreshBtn').onclick = refresh;
   $('settingsForm').onsubmit = function (event) {
     event.preventDefault();
-    fields.forEach(function (key) { settings[key] = $(key).value.trim(); });
-    settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 60));
-    try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = '이 브라우저에 저장했습니다.'; }
+    var next = {};
+    fields.forEach(function (key) { next[key] = $(key).value.trim(); });
+    next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 60));
+    try { TransitAPI.targets(next); }
+    catch (error) { $('saveStatus').textContent = error.message; return; }
+    settings = next;
+    try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = '설정을 저장했습니다.'; }
     catch (_) { $('saveStatus').textContent = '저장할 수 없어 이번 화면에서만 사용합니다.'; }
-    refresh();
+    toggle(false); refresh();
   };
   $('clearBtn').onclick = function () {
     settings = { subwayKey: '', station: '', busKey: '', arsId: '', interval: 60 };
     fields.forEach(function (key) { $(key).value = settings[key]; });
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = '저장 정보를 삭제했습니다.'; }
-    catch (_) { $('saveStatus').textContent = '브라우저 저장소에 접근할 수 없습니다. 브라우저 설정에서 사이트 데이터를 삭제하세요.'; }
+    catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }
     refresh();
   };
   document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(timer); } else { refresh(); } });
-  if (!settings.subwayKey && !settings.busKey) toggle(true);
   refresh();
 })();
