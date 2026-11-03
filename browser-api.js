@@ -2,6 +2,25 @@
   'use strict';
   function error(message, code) { var e = new Error(message); e.code = code; return e; }
   function targets(settings) {
+    if (Array.isArray(settings.stops)) {
+      var all = [];
+      if (settings.stops.length > 20) throw error('정류장은 최대 20개까지 추가할 수 있습니다.');
+      settings.stops.forEach(function (stop, index) {
+        var location = String(stop.location || '').trim();
+        var condition = String(stop.condition || '').trim();
+        if (!location || !condition) throw error('정류장 ' + (index + 1) + '의 장소와 노선·방향을 입력하세요.');
+        if (stop.type === 'bus') {
+          location = { '신동아정문': '20726', '노들역': '20014' }[location] || location;
+          condition.split(/[,，]+/).forEach(function (route) { all = all.concat(targets({ arsId: location + '/' + route.trim() })); });
+        } else if (stop.type === 'subway') {
+          var pieces = condition.replace(/공항\s*방향/g, '공항방향').split(/[\s/]+/).filter(Boolean);
+          all = all.concat(targets({ station: location + '/' + pieces.join('/') }));
+        } else throw error('교통수단을 선택하세요.');
+      });
+      var unique = [];
+      all.forEach(function (t) { if (!unique.some(function (v) { return JSON.stringify(v) === JSON.stringify(t); })) unique.push(t); });
+      return unique;
+    }
     var result = [];
     ['subway', 'bus'].forEach(function (type) {
       var text = type === 'subway' ? settings.station : settings.arsId;
@@ -37,6 +56,12 @@
     });
     return result;
   }
+  function migrateStops(settings) {
+    if (Array.isArray(settings.stops)) return settings.stops.map(function (s) { return { type: s.type, location: String(s.location || ''), condition: String(s.condition || '') }; });
+    return targets(settings).sort(function (a, b) { return (a.type === 'bus' ? 0 : 1) - (b.type === 'bus' ? 0 : 1); }).map(function (t) {
+      return { type: t.type, location: t.value, condition: t.type === 'bus' ? t.route : (t.line ? Number(t.line) - 1000 + '호선' : '') + (t.via ? ' 공항방향' : t.direction ? ' ' + t.direction : '') };
+    });
+  }
   function label(t) {
     if (t.type === 'subway') return /역$/.test(t.value) ? t.value : t.value + '역';
     return { '20726': '신동아정문', '20014': '노들역' }[t.value] || t.value;
@@ -56,7 +81,7 @@
     } else slots = items.slice(0, 2).map(function (item) { return { item: item, label: item.title.split(/\s*-\s*/)[0], message: item.message }; });
     return [slots[0] || null, slots[1] || null];
   }
-  function groupTargets(targets) {
+  function groupTargets(targets, preserveOrder) {
     var groups = [];
     targets.forEach(function (target) {
       var key = target.type + ':' + target.value;
@@ -64,7 +89,7 @@
       if (!group) { group = { key: key, type: target.type, value: target.value, targets: [] }; groups.push(group); }
       group.targets.push(target);
     });
-    return groups.sort(function (a, b) { return (a.type === 'bus' ? 0 : 1) - (b.type === 'bus' ? 0 : 1); });
+    return preserveOrder ? groups : groups.sort(function (a, b) { return (a.type === 'bus' ? 0 : 1) - (b.type === 'bus' ? 0 : 1); });
   }
   function routeRows(views) {
     var rows = [];
@@ -250,5 +275,5 @@
       clear: function () { cache.clear(); }
     };
   }
-  root.TransitAPI = { targets: targets, label: label, groupTargets: groupTargets, routeRows: routeRows, arrivalSlots: arrivalSlots, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
+  root.TransitAPI = { targets: targets, migrateStops: migrateStops, label: label, groupTargets: groupTargets, routeRows: routeRows, arrivalSlots: arrivalSlots, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
 })(typeof window !== 'undefined' ? window : globalThis);

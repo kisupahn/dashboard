@@ -76,14 +76,15 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date']) ids[id] = element();
   ids.settings.hidden = true;
   let stored;
-  const events = {};
+  const events = {}, timers = [];
+  let fullscreenCalls = 0;
   const ctx = setup({
-    document: { hidden: false, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
+    document: { hidden: false, documentElement: { requestFullscreen: async () => { fullscreenCalls++; } }, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
     localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
-    setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
+    setTimeout: (fn, ms) => { const task = { fn, ms, cleared: false }; timers.push(task); return task; }, clearTimeout(task) { if (task) task.cleared = true; }, setInterval: () => 0,
     fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply({ ok: true, data: busBody }); },
   });
   vm.runInContext(readFileSync(new URL('../script.js', import.meta.url), 'utf8'), ctx);
@@ -111,16 +112,34 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(cards[1].children[2].children[0].children[1].children[0].textContent, '3분 0초');
   assert.equal(cards[1].children[2].children[0].children[2].children[0].textContent, '10분 0초');
   assert.equal(cards[1].children[2].children[0].children.length, 3);
+  // Thirty scheduled automatic cycles retain the current card until the fresh response arrives.
+  const oldRow = cards[1].children[2].children[0];
+  for (let i = 0; i < 30; i++) {
+    const timer = timers.findLast(t => !t.cleared && t.fn.name === 'autoRefresh');
+    assert(timer); timer.cleared = true; timer.fn();
+    if (i === 0) assert.equal(cards[1].children[2].children[0], oldRow);
+    await new Promise(resolve => setImmediate(resolve));
+  }
+  assert.equal(ids.arrivalPanels.hidden, true);
+  assert.equal(ids.renewNotice.hidden, false);
+  assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   events.click({ target: { closest: () => true } });
   assert.equal(ids.refreshBtn.disabled, false);
   events.click({ target: { closest: () => null } });
   assert.equal(ids.refreshBtn.disabled, true);
+  assert.equal(ids.arrivalPanels.hidden, false);
+  assert.equal(ids.renewNotice.hidden, true);
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ids.settings.hidden, true);
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
+  ids.stopEditor.children[0].children[1].children[1].onclick();
+  await ids.fullscreenBtn.onclick(); assert.equal(fullscreenCalls, 1);
   ids.settingsForm.onsubmit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 60);
+  assert.equal(stored.stops[0].location, '20014');
+  assert.equal(stored.stops[1].location, '20276');
+  assert.equal(stored.station, undefined);
   assert.equal(ids.settings.hidden, true); assert.equal(ids.refreshBtn.disabled, false);
 });
 test('relay URL contains no provider keys and rejects non-deployment addresses', () => {
@@ -251,4 +270,19 @@ test('bus source timestamp and relay cache age are accounted for without rebasin
   assert.equal(api.presentation(stamped, reference).message, '약 2분 30초 후');
   const state = { ...slot.item, message: '곧 도착' };
   assert.equal(api.presentation(state, reference + 20000).message, '곧 도착');
+});
+test('legacy locations migrate into editable stop entries without losing conditions', () => {
+  const migrated = api.migrateStops(settings);
+  assert.equal(migrated[0].type, 'bus');
+  assert.equal(migrated[0].location, '20276');
+  assert.equal(migrated[2].condition, '9호선 공항방향');
+  const ordered = [migrated[2], migrated[1], migrated[0]];
+  const targets = api.targets({ stops: ordered });
+  const groups = api.groupTargets(targets, true);
+  assert.equal(groups[0].type, 'subway');
+  assert.equal(groups[1].value, '20014');
+  assert.equal(targets[0].via, '노량진');
+  assert.equal(api.targets({ stops: [{ type: 'bus', location: '신동아정문', condition: '동작08' }] })[0].value, '20726');
+  assert.equal(api.targets({ stops: [{ type: 'bus', location: '20014', condition: '360,동작08' }] }).length, 2);
+  assert.throws(() => api.targets({ stops: [{ type: 'bus', location: '20014', condition: '' }] }));
 });

@@ -21,12 +21,19 @@
     button { cursor: pointer; background: var(--control); color: var(--ink); } button:disabled { opacity: .45; }
     button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--muted); outline-offset: 3px; }
     .panels { width: 72%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
-    article { min-width: 0; padding: clamp(20px, 3vw, 32px); background: var(--card); border: 1px solid var(--edge); border-radius: 16px; }
-    .card-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+    article { position: relative; min-width: 0; padding: clamp(20px, 3vw, 32px); background: var(--card); border: 1px solid var(--edge); border-radius: 16px; }
+    .card-head { padding-right: 60px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
     .card-head h2 { flex: 1 1 140px; min-width: 0; }
     .transport-icon { width: 38px; height: 38px; color: var(--ink); flex: 0 0 38px; }
     .transport-icon svg { width: 100%; height: 100%; display: block; }
-    .loading { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+    .date { flex-basis: 100%; margin: -8px 0 0; color: var(--muted); font-size: clamp(16px, 2.1vw, 24px); }
+    .stop-editor { position: relative; margin: 12px 0; padding: 14px; border: 1px solid var(--edge); border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stop-editor legend { font-weight: 600; padding: 0 6px; }
+    .stop-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 6px; }
+    .stop-actions button { padding: 5px 10px; }
+    .type-toggle { grid-column: 1 / -1; display: flex; gap: 6px; }
+    .type-toggle [aria-pressed="true"] { background: var(--ink); color: var(--page); }
+    .loading { position: absolute; top: 24px; right: 18px; margin: 0; color: var(--muted); font-size: 12px; }
     .arrivals { margin-top: 18px; }
     .route-row { display: grid; grid-template-columns: minmax(0, .95fr) repeat(2, minmax(0, 1fr)); align-items: center; padding: 14px 0; gap: 10px; }
     .route-name { justify-self: start; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px; max-width: 100%; margin: 0; padding: 6px 10px; border: 1px solid var(--edge); border-radius: 9px; color: var(--ink); font-size: clamp(16px, 2.2vw, 24px); font-weight: 600; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
@@ -40,6 +47,7 @@
     .arrival { min-width: 0; min-height: 64px; padding: 0 8px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
     .arrival p { font-size: clamp(19px, 3.4vw, 40px); font-weight: 600; line-height: 1.2; word-break: keep-all; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--ink); margin: 0; }
     .arrival small { color: var(--muted); font-size: clamp(14px, 2vw, 22px); white-space: nowrap; line-height: 1.2; }
+    .renew-notice { width: 72%; min-height: 200px; font-size: 32px; background: var(--page); }
     .refresh-hint { width: 72%; text-align: center; color: var(--muted); font-size: 13px; margin: 22px 0 0; }
     .error { color: var(--error); line-height: 1.5; font-size: 14px; }
     #settings { margin: 0 0 24px auto; max-width: 640px; padding: 18px; background: var(--card); border: 1px solid var(--edge); border-radius: 10px; }
@@ -50,22 +58,22 @@
     pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
     #refreshStatus { font-size: 12px; color: var(--muted); } #saveStatus:empty { display: none; } #emptyState { color: var(--muted); }
     [hidden] { display: none !important; }
-    @media(max-width: 600px) { .panels, .refresh-hint { width: 92%; } form { grid-template-columns: 1fr; } .route-name { padding: 5px 7px; } .arrival { padding: 0 4px; } }
+    @media(max-width: 600px) { .panels, .refresh-hint, .renew-notice { width: 92%; } form, .stop-editor { grid-template-columns: 1fr; } .route-name { padding: 5px 7px; } .arrival { padding: 0 4px; } }
   </style>
 </head>
 
 <body>
-  <header><h1 id="clock">Loading...</h1><div><button id="refreshBtn" type="button">갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
+  <header><h1 id="clock">Loading...</h1><p id="date" class="date"></p><div><button id="refreshBtn" type="button">갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
 
   <section id="settings" hidden>
     <div class="settings-head"><h2>교통정보 설정</h2><button id="closeSettingsBtn" type="button" aria-label="설정 닫기">닫기</button></div>
     <form id="settingsForm">
       <details class="full"><summary>중계 주소 · 기본 설정됨</summary><label>Apps Script 웹 앱 주소<input id="relayUrl" type="url" autocomplete="off"></label></details>
-      <label>지하철 · 역명/호선/방향<input id="station" placeholder="노들/9/공항방향" maxlength="500"></label>
+      <div id="stopEditor" class="full"></div><button id="addStopBtn" type="button" class="full">정류장 추가</button>
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
-      <label>버스 · 정류소/노선<input id="arsId" placeholder="20726/동작08, 20014/360" maxlength="100"></label>
+      <button id="fullscreenBtn" type="button">전체화면 전환</button>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="30" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.8</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.9</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -73,10 +81,11 @@
   <p id="saveStatus" role="status"></p>
   <p id="emptyState">설정에서 조회할 곳을 추가하세요.</p>
   <main class="panels" id="arrivalPanels"></main>
+  <button id="renewNotice" class="renew-notice" type="button" hidden>새로고침</button>
   <p id="refreshHint" class="refresh-hint" hidden>아무데나 눌러 새로고침</p>
 
-  <script src="route-catalog.js?v=20261103.8"></script>
-  <script src="browser-api.js?v=20261103.8"></script>
-  <script src="script.js?v=20261103.8"></script>
+  <script src="route-catalog.js?v=20261103.9"></script>
+  <script src="browser-api.js?v=20261103.9"></script>
+  <script src="script.js?v=20261103.9"></script>
 </body>
 </html>
