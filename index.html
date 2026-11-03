@@ -7,45 +7,37 @@
   <title>서울 교통 대시보드</title>
 
   <style>
-    * { box-sizing: border-box; } body { margin: 0; padding: 2.5vw; background: #10141d; color: #f3f6ff; font-family: sans-serif; }
-    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; } h1 { font-size: clamp(40px, 5vw, 80px); margin: 0; } h2 { margin-top: 0; font-size: 28px; }
-    button, input { font: inherit; padding: 12px 16px; border: 1px solid #52617c; border-radius: 8px; } button { cursor: pointer; background: #23334f; color: white; } button:focus-visible, input:focus-visible { outline: 3px solid #9ab9ff; } button:disabled { opacity: .6; }
-    #memo, #refreshStatus { color: #aab8d0; margin: 16px 0; } .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; } article, #settings { padding: 28px; border: 1px solid #2c3c55; border-radius: 16px; background: #172131; } .arrival { border-top: 1px solid #33425b; padding: 18px 0; } .arrival strong { font-size: 24px; } .arrival p { font-size: 24px; color: #a7d6ff; margin: 10px 0; } .arrival small, .meta { color: #aab8d0; } .error { color: #ffc5a8; line-height: 1.6; } form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; } #settings input { padding: 9px 10px; } #settings button { padding: 9px 12px; } #settings h2 { font-size: 18px; margin-bottom: 14px; } #settings p { margin: 6px 0 0; } label { display: grid; gap: 8px; } input { background: #0e1726; color: white; min-width: 0; width: 100%; } .full { grid-column: 1 / -1; line-height: 1.7; } #settings { margin: 12px 0 12px auto; max-width: 640px; padding: 18px; border-radius: 10px; } .settings-head { display: flex; justify-content: space-between; align-items: center; } .settings-head button { margin-bottom: 12px; } #emptyState { color: #aab8d0; } .panels:empty { display: none; } [hidden] { display: none !important; } footer { margin-top: 28px; display: flex; gap: 14px; align-items: center; color: #aab8d0; } #testBtn { font-size: 20px; }
-    /* 세로 뷰포트에서는 1080px 이상이어도 카드를 한 열로 배치합니다. */
-    article { min-width: 0; overflow-wrap: anywhere; }
-    .arrival { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; align-items: baseline; }
-    .arrival p { text-align: right; }
-    .arrival small { grid-column: 1 / -1; }
-    .inspection { grid-column: 1 / -1; margin-top: 14px; font-size: 15px; color: #aab8d0; } .inspection summary { cursor: pointer; padding: 8px 0; } .inspection pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; line-height: 1.7; user-select: text; }
-    #saveStatus:empty { display: none; }
-    @media (orientation: portrait) {
-      body { padding: 4vw; }
-      header { flex-direction: column; align-items: stretch; gap: 12px; }
-      header h1 { font-size: clamp(48px, 10vw, 112px); text-align: center; font-variant-numeric: tabular-nums; }
-      header > div { display: flex; justify-content: flex-end; gap: 10px; }
-      #memo { text-align: center; font-size: clamp(16px, 2.5vw, 26px); }
-      #refreshStatus { font-size: clamp(14px, 1.8vw, 20px); }
-      .panels { grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 20px; }
-      article { padding: clamp(20px, 3vw, 32px); }
-      article h2 { font-size: clamp(24px, 3.5vw, 38px); margin-bottom: 12px; }
-      .arrival { padding: 16px 0; }
-      .arrival strong, .arrival p { font-size: clamp(21px, 3vw, 32px); }
-      .arrival small { font-size: clamp(15px, 2.2vw, 23px); }
-      article > .meta { font-size: clamp(14px, 1.9vw, 20px); }
-      #settings { width: 100%; }
-      footer { flex-wrap: wrap; font-size: 14px; }
-    }
-    @media(max-width: 750px) { .panels, form { grid-template-columns: 1fr; } header { flex-wrap: wrap; } body { padding: 20px; } }
-    @media(max-width: 420px) {
-      .arrival { grid-template-columns: minmax(0, 1fr); gap: 0; }
-      .arrival p { text-align: left; }
-    }
+    * { box-sizing: border-box; }
+    body { margin: 0 auto; padding: clamp(18px, 3vw, 40px); max-width: 1200px; background: #10141d; color: #f3f6ff; font-family: system-ui, sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 28px; }
+    h1 { font-size: clamp(42px, 8vw, 96px); font-variant-numeric: tabular-nums; letter-spacing: -3px; margin: 0; }
+    h2 { margin: 0; font-size: clamp(25px, 3.5vw, 40px); letter-spacing: -1px; }
+    button, input { font: inherit; border: 1px solid #374762; border-radius: 8px; padding: 10px 14px; }
+    button { cursor: pointer; background: #1c2b42; color: #e6edfa; } button:disabled { opacity: .45; }
+    button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #9ab9ff; outline-offset: 3px; }
+    .panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    article { min-width: 0; padding: clamp(20px, 3vw, 32px); background: #172131; border: 1px solid #2c3c55; border-radius: 16px; }
+    .arrivals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 22px; }
+    .arrival { min-width: 0; min-height: 90px; padding: 0 12px; text-align: center; border-left: 1px solid #33425b; }
+    .arrival:first-child { border-left: 0; padding-left: 0; } .arrival:last-child { padding-right: 0; }
+    .arrival p { font-size: clamp(20px, 3.6vw, 42px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: #a7d6ff; margin: 4px 0 10px; overflow-wrap: anywhere; }
+    .arrival small { color: #aab8d0; font-size: clamp(14px, 2vw, 22px); }
+    .error { color: #ffc5a8; line-height: 1.5; font-size: 14px; }
+    #settings { margin: 0 0 24px auto; max-width: 640px; padding: 18px; background: #172131; border: 1px solid #2c3c55; border-radius: 10px; }
+    .settings-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; } #settings h2 { font-size: 18px; letter-spacing: 0; }
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; } label { display: grid; gap: 8px; }
+    input { min-width: 0; width: 100%; background: #0e1726; color: white; padding: 9px 10px; }
+    .full { grid-column: 1 / -1; } details { color: #aab8d0; font-size: 13px; } summary { cursor: pointer; padding: 7px 0; }
+    pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+    #refreshStatus { font-size: 12px; color: #aab8d0; } #saveStatus:empty { display: none; } #emptyState { color: #aab8d0; }
+    [hidden] { display: none !important; }
+    @media(max-width: 600px) { header { flex-wrap: wrap; } header > div { margin-left: auto; } form { grid-template-columns: 1fr; } .arrival { padding: 0 8px; } }
   </style>
 </head>
 
 <body>
-  <header><h1 id="clock">Loading...</h1><div><button id="refreshBtn" type="button">지금 갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
-  <p class="meta">서울 교통 · 노들역 생활권</p>
+  <header><h1 id="clock">Loading...</h1><div><button id="refreshBtn" type="button">갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
+
   <section id="settings" hidden>
     <div class="settings-head"><h2>교통정보 설정</h2><button id="closeSettingsBtn" type="button" aria-label="설정 닫기">닫기</button></div>
     <form id="settingsForm">
@@ -54,17 +46,17 @@
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <label>버스 · 정류소/노선<input id="arsId" placeholder="20726/동작08, 20014/360" maxlength="100"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="180" required></label>
-      <div class="full meta">여러 조건은 쉼표로 구분합니다. 버스는 노선 필수. 기본 3분 · 간격을 줄이거나 수동 조회하면 API 사용량이 늘어납니다. API 키는 Apps Script에 저장합니다.</div>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.2</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
-  <p id="refreshStatus" role="status">설정에서 중계 주소와 조회할 역·정류소를 입력하세요.</p>
+
   <p id="saveStatus" role="status"></p>
-  <p id="emptyState">설정에서 중계 주소와 조회할 역·정류소를 추가하세요. 여러 곳은 쉼표로 구분합니다.</p>
+  <p id="emptyState">설정에서 조회할 곳을 추가하세요.</p>
   <main class="panels" id="arrivalPanels"></main>
-  <footer><span>화면 버전 20261103.1</span><br>자료: 서울 열린데이터광장 · 서울특별시 버스도착정보조회 서비스<br>지하철 시간은 API 생성 이후 경과시간을 반영한 추정입니다. 실제 운행 상황은 다를 수 있습니다.</footer>
-  <script src="route-catalog.js?v=20261103.1"></script>
-  <script src="browser-api.js?v=20261103.1"></script>
-  <script src="script.js?v=20261103.1"></script>
+
+  <script src="route-catalog.js?v=20261103.2"></script>
+  <script src="browser-api.js?v=20261103.2"></script>
+  <script src="script.js?v=20261103.2"></script>
 </body>
 </html>

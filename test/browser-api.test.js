@@ -88,9 +88,16 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   vm.runInContext(readFileSync(new URL('../script.js', import.meta.url), 'utf8'), ctx);
   await new Promise(resolve => setImmediate(resolve));
   const cards = ids.arrivalPanels.children;
-  assert.equal(cards.length, 3); assert.equal(cards[0].children[1].className, 'error');
-  assert.equal(cards[1].children[2].children.length, 0);
-  assert.equal(cards[2].children[2].children.length, 1);
+  assert.equal(cards.length, 3);
+  assert.equal(cards[0].children[0].textContent, '20276');
+  assert.equal(cards[1].children[0].textContent, '노들역');
+  assert.equal(cards[2].children[0].textContent, '노들역');
+  assert.equal(cards[2].children[1].className, 'error');
+  for (const card of cards) assert.equal(card.children[2].children.length, 3);
+  assert.equal(cards[0].children[2].children[0].children[0].textContent, '');
+  assert.equal(cards[1].children[2].children[0].children[0].textContent, '3분');
+  assert.equal(cards[1].children[2].children[1].children[0].textContent, '10분');
+  assert.equal(cards[1].children[2].children[2].children[0].textContent, '');
   assert.equal(ids.settings.hidden, true);
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
   ids.settingsForm.onsubmit({ preventDefault() {} });
@@ -160,4 +167,23 @@ test('diagnostic exposes conflicting source estimates without changing either in
 test('access code has no minimum length but must be nonempty', () => {
   assert.equal(new URL(api.relayURL(api.targets(settings)[2], { ...connection, relayToken: 'a' })).searchParams.get('token'), 'a');
   assert.throws(() => api.relayURL(api.targets(settings)[2], { ...connection, relayToken: '' }), { code: 'CONFIG' });
+});
+test('three arrival slots use actual bus vehicles only and leave missing slots blank', () => {
+  const rows = api.normalize('bus', busBody);
+  const slots = api.arrivalSlots('bus', rows);
+  assert.equal(slots.length, 3);
+  assert.equal(slots[0].message, '3분 후');
+  assert.equal(slots[1].message, '10분 후');
+  assert.equal(slots[2], null);
+  const absent = api.arrivalSlots('bus', [{ message: '운행종료', secondMessage: '' }]);
+  assert.equal(absent[0], null); assert.equal(absent[1], null); assert.equal(absent[2], null);
+  assert.equal(api.label({ type: 'bus', value: '20726', route: '동작08' }), '신동아정문');
+});
+test('subway keeps three arrivals and pads an incomplete list without inventing data', () => {
+  const rows = [1, 2, 3, 4].map(n => ({ title: '개화행 - 노량진방면', message: n + '분 후' }));
+  const slots = api.arrivalSlots('subway', rows);
+  assert.equal(slots.length, 3); assert.equal(slots[2].message, '3분 후');
+  assert.equal(slots[0].label, '개화행');
+  const sparse = api.arrivalSlots('subway', rows.slice(0, 1));
+  assert.equal(sparse[1], null); assert.equal(sparse[2], null);
 });

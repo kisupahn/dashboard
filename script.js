@@ -28,56 +28,57 @@ updateClock(); setInterval(updateClock, 1000);
   document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !$('settings').hidden) toggle(false); });
   function makeCard(target) {
     var article = document.createElement('article');
-    var heading = document.createElement('h2');
-    heading.textContent = TransitAPI.label(target);
-    var status = document.createElement('p'); status.className = 'meta'; status.setAttribute('role', 'status');
-    var arrivals = document.createElement('div');
+    var heading = document.createElement('h2'); heading.textContent = TransitAPI.label(target);
+    var status = document.createElement('p'); status.className = 'error'; status.setAttribute('role', 'status'); status.hidden = true;
+    var arrivals = document.createElement('div'); arrivals.className = 'arrivals';
     article.appendChild(heading); article.appendChild(status); article.appendChild(arrivals);
     $('arrivalPanels').appendChild(article);
-    return { heading: heading, status: status, arrivals: arrivals, ticks: [] };
+    var card = { target: target, heading: heading, status: status, arrivals: arrivals, ticks: [], items: [] };
+    render(card, []);
+    return card;
+  }
+  function concise(message) {
+    return message.replace(/^약\s*/, '').replace(/\s*후(?:\s*\([^)]*\))?$/, '').replace('예정 시각 경과 · 새 정보 대기', '');
   }
   function render(card, items) {
-    card.arrivals.textContent = ''; card.ticks = [];
-    items.forEach(function (item) {
+    card.arrivals.textContent = ''; card.ticks = []; card.items = items;
+    TransitAPI.arrivalSlots(card.target.type, items).forEach(function (slot) {
       var row = document.createElement('div'); row.className = 'arrival';
-      var title = document.createElement('strong'); title.textContent = item.title;
-      var message = document.createElement('p'); message.title = 'API 원본: ' + item.message;
-      var detail = document.createElement('small');
-      var inspection, raw;
-      if (item.kind === 'subway') {
-        inspection = document.createElement('details'); inspection.className = 'inspection';
-        var summary = document.createElement('summary'); summary.textContent = '원본 · 계산 확인';
-        raw = document.createElement('pre');
-        inspection.appendChild(summary); inspection.appendChild(raw);
-      }
+      var message = document.createElement('p');
+      var label = document.createElement('small');
       function tick() {
-        var display = TransitAPI.presentation(item, Date.now());
-        message.textContent = display.message;
-        if (raw) raw.textContent = TransitAPI.diagnostic(item, Date.now());
-        detail.textContent = item.detail + (item.sourceTime ? ' · API 생성 ' + item.sourceTime : ' · API 생성 시각 미제공') + (display.note ? ' · ' + display.note : '');
+        var text = slot ? (slot.item ? TransitAPI.presentation(slot.item, Date.now()).message : slot.message) : '';
+        message.textContent = concise(text);
+        label.textContent = text && message.textContent ? slot.label : '';
       }
-      tick(); if (item.kind === 'subway') card.ticks.push(tick);
-      row.appendChild(title); row.appendChild(message); row.appendChild(detail);
-      if (inspection) row.appendChild(inspection);
-      card.arrivals.appendChild(row);
+      tick(); if (slot && slot.item) card.ticks.push(tick);
+      row.appendChild(message); row.appendChild(label); card.arrivals.appendChild(row);
     });
+  }
+  function diagnostics() {
+    var output = $('diagnostics');
+    if (!output) return;
+    output.textContent = cards.map(function (card) {
+      return card.heading.textContent + '\n' + card.items.map(function (item) {
+        return item.kind === 'subway' ? TransitAPI.diagnostic(item, Date.now()) : item.message + '\n' + item.secondMessage;
+      }).join('\n\n');
+    }).join('\n\n');
   }
   async function load(target, card, run, force) {
     if (run !== generation) return;
-    card.status.textContent = '조회 중…'; card.status.className = 'meta';
+    card.status.hidden = true; card.status.textContent = '';
     var controller = new AbortController(); controllers.push(controller);
     var timeout = setTimeout(function () { controller.abort(); }, 40000);
     try {
       var items = await client.load(target, Object.assign({}, settings, { forceRefresh: force }), controller.signal);
       if (run !== generation) return;
-      render(card, target.type === 'subway' ? items.slice(0, 2) : items);
-      if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = '버스 · ' + items[0].stop + ' (' + target.value + ')' + (target.route ? ' · ' + target.route : '');
-      card.status.textContent = (items.length ? '조회 ' : '조건 일치 정보 없음 · ') + new Date().toLocaleTimeString('ko-KR');
-      if (force) card.status.textContent += items.relayInfo && items.relayInfo.cacheBypass ? ' · 원천 재조회 완료' : ' · 중계 업데이트 필요: 캐시 우회 미지원';
+      render(card, items);
+      if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = items[0].stop;
+      diagnostics();
     } catch (error) {
       if (run !== generation) return;
       render(card, []);
-      card.status.textContent = error.message; card.status.className = error.code === 'SERVICE_ENDED' ? 'meta' : 'error';
+      card.status.textContent = error.code === 'SERVICE_ENDED' ? '' : error.message; card.status.hidden = error.code === 'SERVICE_ENDED'; card.status.className = 'error';
     } finally { clearTimeout(timeout); }
   }
   var cards = [], signature = '';
@@ -87,14 +88,14 @@ updateClock(); setInterval(updateClock, 1000);
     controllers.forEach(function (controller) { controller.abort(); }); controllers = [];
     client.clear();
     var run = ++generation, targets;
-    try { targets = TransitAPI.targets(settings); }
+    try { targets = TransitAPI.targets(settings).sort(function (a, b) { return (a.type === 'bus' ? 0 : 1) - (b.type === 'bus' ? 0 : 1); }); }
     catch (error) { $('saveStatus').textContent = error.message; $('refreshBtn').disabled = false; return; }
     var nextSignature = JSON.stringify(targets);
     if (signature !== nextSignature) {
       $('arrivalPanels').textContent = '';
       cards = targets.map(makeCard); signature = nextSignature;
     }
-    cards.forEach(function (card) { render(card, []); card.status.textContent = '조회 대기'; });
+    cards.forEach(function (card) { render(card, []); card.status.hidden = true; });
     $('emptyState').hidden = targets.length > 0;
     $('refreshBtn').disabled = true;
     // 여러 곳을 조회해도 동시 API 요청은 3건으로 제한합니다.
@@ -120,19 +121,19 @@ updateClock(); setInterval(updateClock, 1000);
     try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
     catch (error) { $('saveStatus').textContent = error.message; return; }
     settings = next;
-    try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = '설정을 저장했습니다.'; }
+    try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = ''; }
     catch (_) { $('saveStatus').textContent = '저장할 수 없어 이번 화면에서만 사용합니다.'; }
     toggle(false); refresh();
   };
   $('presetBtn').onclick = function () {
     $('station').value = '노들/9/공항방향';
     $('arsId').value = '20726/동작08, 20014/360';
-    $('saveStatus').textContent = '조회조건을 채웠습니다. 저장하고 닫기를 누르세요. 중계 설정은 유지됩니다.';
+    $('saveStatus').textContent = '';
   };
   $('clearBtn').onclick = function () {
     settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '',  arsId: '', interval: 180 };
     fields.forEach(function (key) { $(key).value = settings[key]; });
-    try { localStorage.removeItem(storageKey); $('saveStatus').textContent = '저장 정보를 삭제했습니다.'; }
+    try { localStorage.removeItem(storageKey); $('saveStatus').textContent = ''; }
     catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }
     refresh();
   };

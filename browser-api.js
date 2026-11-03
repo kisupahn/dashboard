@@ -38,7 +38,20 @@
     return result;
   }
   function label(t) {
-    return (t.type === 'subway' ? '지하철 · ' : '버스 · ') + t.value + (t.route ? ' · ' + t.route : '') + (t.line ? ' · ' + (Number(t.line) - 1000) + '호선' : '') + (t.directionLabel || t.direction ? ' · ' + (t.directionLabel || t.direction) : '');
+    if (t.type === 'subway') return /역$/.test(t.value) ? t.value : t.value + '역';
+    return { '20726': '신동아정문', '20014': '노들역' }[t.value] || t.value;
+  }
+  function arrivalSlots(type, items) {
+    var slots;
+    if (type === 'bus') {
+      slots = [];
+      // 이 API는 첫째·둘째 차량까지만 제공합니다. 세 번째는 추정해 채우지 않습니다.
+      if (items[0]) [items[0].message, items[0].secondMessage].forEach(function (message) {
+        var available = message && !/안내 없음|정보.*없|운행.*종료|출발.*대기|회차.*대기/.test(message);
+        slots.push(available ? { message: message, label: '' } : null);
+      });
+    } else slots = items.slice(0, 3).map(function (item) { return { item: item, label: item.title.split(/\s*-\s*/)[0], message: item.message }; });
+    return [slots[0] || null, slots[1] || null, slots[2] || null];
   }
   function normalize(type, data) {
     if (!data || typeof data !== 'object') throw error('API 응답 형식이 올바르지 않습니다.');
@@ -59,7 +72,7 @@
     if (!data.msgBody || !Object.prototype.hasOwnProperty.call(data.msgBody, 'itemList')) throw error('버스 응답 형식이 올바르지 않습니다.');
     var rows = data.msgBody.itemList || [];
     if (!Array.isArray(rows)) rows = [rows];
-    return rows.map(function (v) { return { title: String(v.busRouteAbrv || v.rtNm || '버스'), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
+    return rows.map(function (v) { return { title: String(v.busRouteAbrv || v.rtNm || '버스'), secondMessage: String(v.arrmsg2 || ''), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
   }
   function filter(type, items, target) {
     if (type === 'subway') {
@@ -187,5 +200,5 @@
       clear: function () { cache.clear(); }
     };
   }
-  root.TransitAPI = { targets: targets, label: label, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
+  root.TransitAPI = { targets: targets, label: label, arrivalSlots: arrivalSlots, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation, diagnostic: diagnostic };
 })(typeof window !== 'undefined' ? window : globalThis);
