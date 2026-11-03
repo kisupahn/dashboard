@@ -10,6 +10,7 @@ export function createServer({ env = process.env, transit = createTransit({ env 
     ['/', ['index.html', 'text/html; charset=utf-8']],
     ['/index.html', ['index.html', 'text/html; charset=utf-8']],
     ['/script.js', ['script.js', 'text/javascript; charset=utf-8']],
+    ['/browser-api.js', ['browser-api.js', 'text/javascript; charset=utf-8']],
   ]);
   return http.createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');

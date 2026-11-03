@@ -7,42 +7,36 @@
   <title>Dashboard</title>
 
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      background: #111;
-      color: white;
-      font-family: sans-serif;
-    }
-
-    h1 {
-      font-size: 8vw;
-      margin: 0;
-    }
-
-    #testBtn {
-      font-size: 32px;
-      padding: 15px 40px;
-      cursor: pointer;
-    }
+    * { box-sizing: border-box; } body { margin: 0; padding: 4vw; background: #10141d; color: #f3f6ff; font-family: sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; } h1 { font-size: clamp(44px, 7vw, 110px); margin: 0; } h2 { margin-top: 0; font-size: 28px; }
+    button, input { font: inherit; padding: 12px 16px; border: 1px solid #52617c; border-radius: 8px; } button { cursor: pointer; background: #23334f; color: white; } button:focus-visible, input:focus-visible { outline: 3px solid #9ab9ff; } button:disabled { opacity: .6; }
+    #memo, #refreshStatus { color: #aab8d0; margin: 16px 0; } .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; } article, #settings { padding: 28px; border: 1px solid #2c3c55; border-radius: 16px; background: #172131; } .arrival { border-top: 1px solid #33425b; padding: 18px 0; } .arrival strong { font-size: 24px; } .arrival p { font-size: 24px; color: #a7d6ff; margin: 10px 0; } .arrival small, .meta { color: #aab8d0; } .error { color: #ffc5a8; line-height: 1.6; } form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } label { display: grid; gap: 8px; } input { background: #0e1726; color: white; min-width: 0; width: 100%; } .full { grid-column: 1 / -1; line-height: 1.7; } #settings { margin-top: 24px; } [hidden] { display: none !important; } footer { margin-top: 28px; display: flex; gap: 14px; align-items: center; color: #aab8d0; } #testBtn { font-size: 20px; }
+    @media(max-width: 750px) { .panels, form { grid-template-columns: 1fr; } header { flex-wrap: wrap; } body { padding: 20px; } }
   </style>
 </head>
 
 <body>
-  <h1 id="clock">Loading...</h1>
-
+  <header><h1 id="clock">Loading...</h1><div><button id="refreshBtn" type="button">지금 갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
   <div id="memo">메모 불러오는 중...</div>
-
-  <button id="testBtn">5</button>
-
+  <section id="settings" hidden>
+    <h2>교통정보 설정</h2>
+    <form id="settingsForm">
+      <label>지하철 인증키<input id="subwayKey" type="password" autocomplete="off"></label>
+      <label>지하철 역명<input id="station" placeholder="강남" maxlength="50"></label>
+      <label>버스 인증키 (Decoding)<input id="busKey" type="password" autocomplete="off"></label>
+      <label>정류소 번호 (5자리)<input id="arsId" inputmode="numeric" pattern="[0-9]{5}" placeholder="01001" maxlength="5"></label>
+      <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
+      <div class="full meta">키는 이 브라우저에 저장되며 API 제공기관으로 직접 전송됩니다. 공유 기기에서는 저장된 키를 확인할 수 있습니다. 사용하지 않는 서비스는 키를 비워두세요. 직접 조회는 제공기관의 HTTPS·CORS 지원이 필요합니다.</div>
+      <div class="full"><button type="submit">저장하고 조회</button> <button id="clearBtn" type="button">저장 정보 삭제</button><p id="saveStatus" role="status"></p></div>
+    </form>
+  </section>
+  <p id="refreshStatus" role="status">설정에서 키와 조회할 역·정류소를 입력하세요.</p>
+  <main class="panels">
+    <article><h2 id="subwayTitle">지하철</h2><p id="subwayStatus" class="meta" role="status">설정 대기</p><div id="subwayArrivals"></div></article>
+    <article><h2 id="busTitle">버스</h2><p id="busStatus" class="meta" role="status">설정 대기</p><div id="busArrivals"></div></article>
+  </main>
+  <footer><span>카운터</span><button id="testBtn" type="button">5</button><span>서버 없이 브라우저에서 직접 조회</span></footer>
+  <script src="browser-api.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
