@@ -20,7 +20,7 @@
     button, input { font: inherit; border: 1px solid var(--edge); border-radius: 8px; padding: 10px 14px; }
     button { cursor: pointer; background: var(--control); color: var(--ink); } button:disabled { opacity: .45; }
     button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--muted); outline-offset: 3px; }
-    .panels { width: 88%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .panels { width: 72%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     article { min-width: 0; padding: clamp(20px, 3vw, 32px); background: var(--card); border: 1px solid var(--edge); border-radius: 16px; }
     .card-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
     .card-head h2 { flex: 1 1 140px; min-width: 0; }
@@ -28,14 +28,19 @@
     .transport-icon svg { width: 100%; height: 100%; display: block; }
     .loading { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
     .arrivals { margin-top: 18px; }
-    .route-row { display: grid; grid-template-columns: minmax(0, .95fr) repeat(2, minmax(0, 1fr)); align-items: center; padding: 18px 0; border-top: 1px solid var(--edge); gap: 10px; }
+    .route-row { display: grid; grid-template-columns: minmax(0, .95fr) repeat(2, minmax(0, 1fr)); align-items: center; padding: 14px 0; gap: 10px; }
     .route-name { justify-self: start; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px; max-width: 100%; margin: 0; padding: 6px 10px; border: 1px solid var(--edge); border-radius: 9px; color: var(--ink); font-size: clamp(16px, 2.2vw, 24px); font-weight: 600; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+    .route-name.village, .route-name.local { color: #208047; }
+    .route-name.trunk { color: #2863b5; }
+    .route-name.line9 { color: #967d32; }
+    .route-name.circular { color: #9b780c; }
+    .route-name.express { color: #bc3c3c; }
     .destination { color: var(--muted); font-size: .72em; font-weight: 400; white-space: nowrap; }
     .route-error { grid-column: 1 / -1; margin: 4px 0 0; }
-    .arrival { min-width: 0; min-height: 76px; padding: 0 8px; text-align: center; }
-    .arrival p { font-size: clamp(19px, 3.4vw, 40px); font-weight: 600; line-height: 1.4; word-break: keep-all; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--ink); margin: 4px 0 10px; }
-    .arrival small { color: var(--muted); font-size: clamp(14px, 2vw, 22px); white-space: nowrap; line-height: 1.5; }
-    .refresh-hint { text-align: center; color: var(--muted); font-size: 13px; margin: 22px 0 0; }
+    .arrival { min-width: 0; min-height: 64px; padding: 0 8px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+    .arrival p { font-size: clamp(19px, 3.4vw, 40px); font-weight: 600; line-height: 1.2; word-break: keep-all; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--ink); margin: 0; }
+    .arrival small { color: var(--muted); font-size: clamp(14px, 2vw, 22px); white-space: nowrap; line-height: 1.2; }
+    .refresh-hint { width: 72%; text-align: center; color: var(--muted); font-size: 13px; margin: 22px 0 0; }
     .error { color: var(--error); line-height: 1.5; font-size: 14px; }
     #settings { margin: 0 0 24px auto; max-width: 640px; padding: 18px; background: var(--card); border: 1px solid var(--edge); border-radius: 10px; }
     .settings-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; } #settings h2 { font-size: 18px; letter-spacing: 0; }
@@ -45,7 +50,7 @@
     pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
     #refreshStatus { font-size: 12px; color: var(--muted); } #saveStatus:empty { display: none; } #emptyState { color: var(--muted); }
     [hidden] { display: none !important; }
-    @media(max-width: 600px) { .panels { width: 100%; } form { grid-template-columns: 1fr; } .route-name { padding: 5px 7px; } .arrival { padding: 0 4px; } .arrival p { min-height: 2.8em; } }
+    @media(max-width: 600px) { .panels, .refresh-hint { width: 92%; } form { grid-template-columns: 1fr; } .route-name { padding: 5px 7px; } .arrival { padding: 0 4px; } }
   </style>
 </head>
 
@@ -60,7 +65,7 @@
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <label>버스 · 정류소/노선<input id="arsId" placeholder="20726/동작08, 20014/360" maxlength="100"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="180" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.6</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.7</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -68,9 +73,10 @@
   <p id="saveStatus" role="status"></p>
   <p id="emptyState">설정에서 조회할 곳을 추가하세요.</p>
   <main class="panels" id="arrivalPanels"></main>
+  <p id="refreshHint" class="refresh-hint" hidden>아무데나 눌러 새로고침</p>
 
-  <script src="route-catalog.js?v=20261103.6"></script>
-  <script src="browser-api.js?v=20261103.6"></script>
-  <script src="script.js?v=20261103.6"></script>
+  <script src="route-catalog.js?v=20261103.7"></script>
+  <script src="browser-api.js?v=20261103.7"></script>
+  <script src="script.js?v=20261103.7"></script>
 </body>
 </html>

@@ -71,7 +71,9 @@
     views.forEach(function (view) {
       var t = view.target;
       if (t.type === 'bus') {
-        rows.push({ name: view.items[0] ? view.items[0].title : t.route, slots: arrivalSlots('bus', view.items), error: view.error });
+        var routeType = view.items[0] ? view.items[0].routeType : '';
+        var color = { '2': 'village', '3': 'trunk', '4': 'local', '5': 'circular', '6': 'express' }[routeType] || ({ '동작08': 'village', '360': 'trunk' }[t.route] || '');
+        rows.push({ colorClass: color, name: view.items[0] ? view.items[0].title : t.route, slots: arrivalSlots('bus', view.items), error: view.error });
         return;
       }
       var groups = [];
@@ -83,7 +85,7 @@
         if (!group.items.some(function (v) { return item.trainId ? v.trainId === item.trainId : v === item; })) group.items.push(item);
       });
       if (!groups.length) {
-        rows.push({ lineName: t.line ? Number(t.line) - 1000 + '호선' : '지하철', destination: t.directionLabel || t.direction || '', name: (t.line ? Number(t.line) - 1000 + '호선' : '지하철') + (t.directionLabel || t.direction || ''), slots: [null, null], error: view.error });
+        rows.push({ colorClass: t.line === '1009' ? 'line9' : '', lineName: t.line ? Number(t.line) - 1000 + '호선' : '지하철', destination: t.directionLabel || t.direction || '', name: (t.line ? Number(t.line) - 1000 + '호선' : '지하철') + (t.directionLabel || t.direction || ''), slots: [null, null], error: view.error });
       }
       groups.forEach(function (group) {
         var existing = rows.find(function (row) { return row.key === group.key; });
@@ -91,7 +93,7 @@
           group.items.forEach(function (item) { if (!existing.items.some(function (v) { return item.trainId ? v.trainId === item.trainId : v === item; })) existing.items.push(item); });
           existing.items.sort(function (a, b) { return a.order.localeCompare(b.order); });
           existing.slots = arrivalSlots('subway', existing.items);
-        } else rows.push({ key: group.key, name: group.name, lineName: group.lineName, destination: group.destination, items: group.items, slots: arrivalSlots('subway', group.items), error: '' });
+        } else rows.push({ colorClass: group.items[0].line === '1009' ? 'line9' : '', key: group.key, name: group.name, lineName: group.lineName, destination: group.destination, items: group.items, slots: arrivalSlots('subway', group.items), error: '' });
       });
     });
     return rows;
@@ -115,7 +117,7 @@
     if (!data.msgBody || !Object.prototype.hasOwnProperty.call(data.msgBody, 'itemList')) throw error('버스 응답 형식이 올바르지 않습니다.');
     var rows = data.msgBody.itemList || [];
     if (!Array.isArray(rows)) rows = [rows];
-    return rows.map(function (v) { return { title: String(v.busRouteAbrv || v.rtNm || '버스'), secondMessage: String(v.arrmsg2 || ''), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
+    return rows.map(function (v) { return { routeType: String(v.routeType || ''), title: String(v.busRouteAbrv || v.rtNm || '버스'), secondMessage: String(v.arrmsg2 || ''), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
   }
   function filter(type, items, target) {
     if (type === 'subway') {

@@ -59,7 +59,7 @@ updateClock(); setInterval(updateClock, 1000);
     card.status.hidden = !card.views.some(function (view) { return view.pending; });
     TransitAPI.routeRows(card.views).forEach(function (route) {
       var row = document.createElement('div'); row.className = 'route-row';
-      var name = document.createElement('h3'); name.className = 'route-name';
+      var name = document.createElement('h3'); name.className = 'route-name' + (route.colorClass ? ' ' + route.colorClass : '');
       if (route.lineName) {
         var line = document.createElement('span'); line.textContent = route.lineName;
         var destination = document.createElement('small'); destination.className = 'destination'; destination.textContent = route.destination;
@@ -74,7 +74,7 @@ updateClock(); setInterval(updateClock, 1000);
         function tick() {
           var text = slot ? (slot.item ? TransitAPI.presentation(slot.item, Date.now()).message : slot.message) : '';
           message.textContent = concise(text);
-          label.textContent = text && message.textContent && !slot.item ? slot.label : '';
+          label.textContent = text && message.textContent ? (slot.item ? slot.item.detail : slot.label) : '';
         }
         tick(); if (slot && slot.item) card.ticks.push(tick);
         cell.appendChild(message); cell.appendChild(label); row.appendChild(cell);
@@ -122,12 +122,7 @@ updateClock(); setInterval(updateClock, 1000);
     if (signature !== nextSignature) {
       $('arrivalPanels').textContent = '';
       cards = TransitAPI.groupTargets(targets).map(makeCard); signature = nextSignature;
-      var subwayCards = cards.filter(function (card) { return card.target.type === 'subway'; });
-      if (subwayCards.length) {
-        var last = subwayCards[subwayCards.length - 1];
-        var hint = document.createElement('p'); hint.className = 'refresh-hint'; hint.textContent = '아무데나 눌러 새로고침';
-        last.element.appendChild(hint);
-      }
+      $('refreshHint').hidden = !cards.some(function (card) { return card.target.type === 'subway'; });
     }
     var jobs = [];
     cards.forEach(function (card) {

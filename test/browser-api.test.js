@@ -76,7 +76,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
   ids.settings.hidden = true;
   let stored;
   const events = {};
@@ -99,10 +99,12 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(cards[2].children[0].children[1].textContent, '노들역');
   assert.equal(cards[2].children[2].children[0].children[3].className, 'error route-error');
   assert.equal(cards[1].children[2].children[0].children[0].textContent, '360');
+  assert.equal(cards[1].children[2].children[0].children[0].className, 'route-name trunk');
   assert.equal(cards[1].children[1].hidden, true);
   assert.equal(cards[0].className, 'transit-card bus');
   assert.equal(cards[2].className, 'transit-card subway');
-  assert.equal(cards[2].children[3].textContent, '아무데나 눌러 새로고침');
+  assert.equal(cards[2].children[3], undefined);
+  assert.equal(ids.refreshHint.hidden, false);
   assert.equal(cards[0].children[3], undefined);
   for (const card of cards) assert.equal(card.children[2].children.length, 1);
   assert.equal(cards[0].children[2].children[0].children[1].children[0].textContent, '');
