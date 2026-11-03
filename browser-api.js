@@ -49,8 +49,8 @@
       if (!Array.isArray(data.realtimeArrivalList)) throw error('지하철 응답 형식이 올바르지 않습니다.');
       return data.realtimeArrivalList.map(function (v) {
         var lineName = String(v.trainLineNm || '');
-        var match = lineName.match(/-\s*(.*?)\s*방면\s*$/);
-        return { title: lineName || String(v.bstatnNm || '지하철'), message: String(v.arvlMsg2 || '안내 없음'), detail: String(v.arvlMsg3 || ''), line: String(v.subwayId || ''), station: String(v.statnNm || ''), direction: String(v.updnLine || ''), via: match ? match[1].trim() : '', sourceTime: String(v.recptnDt || ''), order: String(v.ordkey || '') };
+        var match = lineName.match(/-\s*(.*?)\s*방면(?:\s*\([^)]*\))?\s*$/);
+        return { kind: 'subway', arrivalCode: String(v.arvlCd || ''), arrivalSeconds: /^\d+$/.test(String(v.barvlDt)) && Number(v.barvlDt) > 0 ? Number(v.barvlDt) : null, title: lineName || String(v.bstatnNm || '지하철'), message: String(v.arvlMsg2 || '안내 없음'), detail: String(v.arvlMsg3 || ''), line: String(v.subwayId || ''), station: String(v.statnNm || ''), direction: String(v.updnLine || ''), via: match ? match[1].trim() : '', sourceTime: String(v.recptnDt || ''), order: String(v.ordkey || '') };
       });
     }
     var code = String((data.msgHeader || {}).headerCd);
@@ -63,11 +63,30 @@
   }
   function filter(type, items, target) {
     if (type === 'subway') {
-      var candidates = items.filter(function (v) { return v.station === target.value && (!target.line || v.line === target.line); });
+      var candidates = items.filter(function (v) { return v.arrivalCode !== '2' && v.station === target.value && (!target.line || v.line === target.line); });
       if (target.via && candidates.length && candidates.some(function (v) { return !v.via; })) throw error('방면 정보 확인 불가. 실제 trainLineNm 응답 확인이 필요합니다.', 'DIRECTION_UNKNOWN');
       return candidates.filter(function (v) { return (!target.via || v.via === target.via) && (!target.direction || v.direction === target.direction); }).sort(function (a, b) { return a.order.localeCompare(b.order); });
     }
     return items.filter(function (v) { return v.arsId === target.value && v.routeId === target.routeId; });
+  }
+  function presentation(item, now) {
+    var original = { message: item.message, note: '' };
+    if (item.kind !== 'subway') return original;
+    var stamp = item.sourceTime.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+    if (!stamp) return { message: item.message, note: '생성 시각 확인 불가 · 원본 안내' };
+    // 제공기관 시각은 한국 시각입니다. 브라우저가 어느 시간대여도 같은 시각으로 계산합니다.
+    var generated = Date.UTC(+stamp[1], +stamp[2] - 1, +stamp[3], +stamp[4] - 9, +stamp[5], +stamp[6]);
+    var age = Math.floor((now - generated) / 1000);
+    if (age < -60) return { message: item.message, note: '기기 시각 확인 필요 · 원본 안내' };
+    age = Math.max(0, age);
+    var ageNote = '생성 후 ' + Math.floor(age / 60) + '분 ' + age % 60 + '초';
+    // 진입·도착 등의 상태 문구를 임의로 시간 예측으로 바꾸지 않습니다.
+    var duration = item.message.match(/(?:(\d+)분\s*)?(?:(\d+)초\s*)?후/);
+    if (!duration || (!duration[1] && !duration[2])) return { message: item.message, note: ageNote + ' · 원본 상태' };
+    var seconds = item.arrivalSeconds == null ? Number(duration[1] || 0) * 60 + Number(duration[2] || 0) : item.arrivalSeconds;
+    var remaining = seconds - age;
+    if (remaining <= 0) return { message: '예정 시각 경과 · 새 정보 대기', note: ageNote + ' · 실제 도착 여부 미확인' };
+    return { message: '약 ' + Math.floor(remaining / 60) + '분 ' + remaining % 60 + '초 후', note: ageNote + ' · 경과시간을 반영한 추정' };
   }
   function relayURL(target, connection) {
     if (!connection || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(connection.relayUrl || '')) throw error('설정에 Apps Script 웹 앱 주소(/exec)를 입력하세요.', 'CONFIG');
@@ -141,5 +160,5 @@
       clear: function () { cache.clear(); }
     };
   }
-  root.TransitAPI = { targets: targets, label: label, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp };
+  root.TransitAPI = { targets: targets, label: label, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp, presentation: presentation };
 })(typeof window !== 'undefined' ? window : globalThis);

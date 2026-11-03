@@ -5,7 +5,7 @@ updateClock(); setInterval(updateClock, 1000);
   'use strict';
   var storageKey = 'seoul-transit-settings-v1';
   var fields = ['relayUrl', 'relayToken', 'station', 'arsId', 'interval'];
-  var settings = { relayUrl: '', relayToken: '', station: '노들/9/공항방향',  arsId: '20276/동작08, 20014/360', interval: 180 };
+  var settings = { relayUrl: '', relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 180 };
   var timer, generation = 0, controllers = [];
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
@@ -32,15 +32,22 @@ updateClock(); setInterval(updateClock, 1000);
     var arrivals = document.createElement('div');
     article.appendChild(heading); article.appendChild(status); article.appendChild(arrivals);
     $('arrivalPanels').appendChild(article);
-    return { heading: heading, status: status, arrivals: arrivals };
+    return { heading: heading, status: status, arrivals: arrivals, ticks: [] };
   }
   function render(card, items) {
-    card.arrivals.textContent = '';
+    card.arrivals.textContent = ''; card.ticks = [];
     items.forEach(function (item) {
       var row = document.createElement('div'); row.className = 'arrival';
-      [['strong', item.title], ['p', item.message], ['small', item.detail + (item.sourceTime ? ' · API 생성 ' + item.sourceTime : ' · API 생성 시각 미제공')]].forEach(function (pair) {
-        var node = document.createElement(pair[0]); node.textContent = pair[1]; row.appendChild(node);
-      });
+      var title = document.createElement('strong'); title.textContent = item.title;
+      var message = document.createElement('p'); message.title = 'API 원본: ' + item.message;
+      var detail = document.createElement('small');
+      function tick() {
+        var display = TransitAPI.presentation(item, Date.now());
+        message.textContent = display.message;
+        detail.textContent = item.detail + (item.sourceTime ? ' · API 생성 ' + item.sourceTime : ' · API 생성 시각 미제공') + (display.note ? ' · ' + display.note : '');
+      }
+      tick(); if (item.kind === 'subway') card.ticks.push(tick);
+      row.appendChild(title); row.appendChild(message); row.appendChild(detail);
       card.arrivals.appendChild(row);
     });
   }
@@ -62,6 +69,7 @@ updateClock(); setInterval(updateClock, 1000);
     } finally { clearTimeout(timeout); }
   }
   var cards = [], signature = '';
+  setInterval(function () { cards.forEach(function (card) { card.ticks.forEach(function (tick) { tick(); }); }); }, 1000);
   async function refresh() {
     clearTimeout(timer);
     controllers.forEach(function (controller) { controller.abort(); }); controllers = [];
@@ -106,7 +114,7 @@ updateClock(); setInterval(updateClock, 1000);
   };
   $('presetBtn').onclick = function () {
     $('station').value = '노들/9/공항방향';
-    $('arsId').value = '20276/동작08, 20014/360';
+    $('arsId').value = '20726/동작08, 20014/360';
     $('saveStatus').textContent = '조회조건을 채웠습니다. 저장하고 닫기를 누르세요. 중계 설정은 유지됩니다.';
   };
   $('clearBtn').onclick = function () {

@@ -115,3 +115,26 @@ test('relay envelope handles authentication and passes arrival data through filt
   const auth = api.createClient(async () => reply({ ok: false, error: { code: 'AUTH', message: '접속 코드 불일치' } }));
   await assert.rejects(auth.load(target, connection), { code: 'AUTH' });
 });
+test('screenshot: 8m35 at 21:13:30 KST becomes 6m51 at 21:15:14', () => {
+  const [item] = api.normalize('subway', { realtimeArrivalList: [{ trainLineNm: '개화행 - 노량진방면', arvlMsg2: '8분 35초 후 (구반포)', recptnDt: '2026-11-03 21:13:30', barvlDt: '0' }] });
+  const atRefresh = Date.parse('2026-11-03T21:15:14+09:00');
+  assert.equal(api.presentation(item, atRefresh).message, '약 6분 51초 후');
+  assert.equal(api.presentation(item, atRefresh + 1000).message, '약 6분 50초 후');
+  assert.equal(api.presentation(item, atRefresh + 600000).message, '예정 시각 경과 · 새 정보 대기');
+});
+test('arrival states remain states, missing/future source timestamps do not invent a countdown', () => {
+  const [item] = api.normalize('subway', { realtimeArrivalList: [{ arvlMsg2: '노들 도착', barvlDt: '100', recptnDt: '2026-11-03 21:13:30' }] });
+  const now = Date.parse('2026-11-03T21:15:14+09:00');
+  assert.equal(api.presentation(item, now).message, '노들 도착');
+  assert.equal(api.presentation({ ...item, sourceTime: '', message: '8분 후' }, now).message, '8분 후');
+  assert.equal(api.presentation({ ...item, message: '8분 후' }, now - 600000).message, '8분 후');
+});
+test('already departed trains cannot occupy the two next-arrival positions', () => {
+  const target = api.targets(settings)[0];
+  const rows = api.normalize('subway', { realtimeArrivalList: [
+    { statnNm: '노들', subwayId: '1009', trainLineNm: '개화행 - 노량진방면', arvlCd: '2' },
+    { statnNm: '노들', subwayId: '1009', trainLineNm: '개화행 - 노량진방면', arvlCd: '3' },
+  ] });
+  assert.equal(api.filter('subway', rows, target).length, 1);
+  assert.equal(api.filter('subway', rows, target)[0].arrivalCode, '3');
+});
