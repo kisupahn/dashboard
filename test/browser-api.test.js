@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 function setup(extra = {}) {
   const ctx = vm.createContext({ URL, AbortController, console, ...extra });
-  for (const file of ['route-catalog.js', 'browser-api.js']) vm.runInContext(readFileSync(new URL('../' + file, import.meta.url), 'utf8'), ctx);
+  for (const file of ['route-catalog.js', 'browser-api.js', 'news-player.js']) vm.runInContext(readFileSync(new URL('../' + file, import.meta.url), 'utf8'), ctx);
   return ctx;
 }
 const api = setup().TransitAPI;
@@ -76,7 +76,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
@@ -93,6 +93,11 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     assert.equal(card.children[1].hidden, false);
   }
   await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ids.relayToken.value, ''); assert.equal(ids.relayToken.disabled, true);
+  assert.equal(ids.relayToken.placeholder, '저장됨');
+  const newsFrame = ids.newsPlayer.children[0];
+  assert.match(newsFrame.src, /youtube.com\/embed\/aZyD6EPl6KU/);
+  assert.equal(ids.newsEnabled.checked, true); assert.equal(ids.newsPanel.hidden, false);
   const cards = ids.arrivalPanels.children;
   assert.equal(cards.length, 3);
   assert.equal(cards[0].children[0].children[1].textContent, '20276');
@@ -121,6 +126,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     await new Promise(resolve => setImmediate(resolve));
     if (i < 89) assert.equal(ids.renewNotice.hidden, true);
   }
+  assert.equal(ids.newsPlayer.children[0], newsFrame); assert.equal(ids.newsPanel.hidden, false);
   assert.equal(ids.arrivalPanels.hidden, true);
   assert.equal(ids.renewNotice.hidden, false);
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
@@ -134,11 +140,20 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(ids.settings.hidden, true);
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
   assert.equal(ids.textScale.value, 135);
+  ids.editTokenBtn.onclick();
+  assert.equal(ids.relayToken.value, ''); assert.equal(ids.relayToken.disabled, false);
+  ids.relayToken.value = 'discard-this';
   ids.textScale.value = '170'; ids.textScale.oninput();
   assert.equal(ctx.document.documentElement.style['--text-scale'], '1.7');
   ids.closeSettingsBtn.onclick();
   assert.equal(ctx.document.documentElement.style['--text-scale'], '1.35');
+  assert.equal(ids.relayToken.value, ''); assert.equal(ids.relayToken.disabled, true);
   ids.settingsBtn.onclick();
+  ids.editTokenBtn.onclick();
+  assert.equal(ids.relayToken.value, '');
+  ids.settingsForm.onsubmit({ preventDefault() {} });
+  assert.equal(ids.settings.hidden, false); assert.equal(stored, undefined);
+  ids.editTokenBtn.onclick(); // Cancel blank replacement and keep the saved code.
   ids.textScale.value = '160'; ids.textScale.oninput();
   ids.stopEditor.children[0].children[1].children[1].onclick();
   await ids.fullscreenBtn.onclick(); assert.equal(fullscreenCalls, 1);
@@ -149,6 +164,23 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(stored.stops[0].location, '20014');
   assert.equal(stored.stops[1].location, '20276');
   assert.equal(stored.station, undefined);
+  assert.equal(stored.newsEnabled, true); assert.equal(ids.newsPlayer.children[0], newsFrame);
+  ids.settingsBtn.onclick(); ids.editTokenBtn.onclick();
+  ids.relayToken.value = 'new-code'; ids.newsUrl.value = 'https://youtu.be/abcdefghijk';
+  ids.settingsForm.onsubmit({ preventDefault() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stored.relayToken, 'new-code'); assert.equal(ids.relayToken.value, '');
+  assert.equal(ids.relayToken.disabled, true); assert.equal(stored.newsUrl, 'https://youtu.be/abcdefghijk');
+  assert.notEqual(ids.newsPlayer.children[0], newsFrame);
+  assert.match(ids.newsPlayer.children[0].src, /embed\/abcdefghijk/);
+  ids.settingsBtn.onclick(); ids.newsUrl.value = 'https://example.com/not-youtube';
+  ids.settingsForm.onsubmit({ preventDefault() {} });
+  assert.equal(ids.settings.hidden, false); assert.equal(stored.newsUrl, 'https://youtu.be/abcdefghijk');
+  ids.newsEnabled.checked = false;
+  ids.settingsForm.onsubmit({ preventDefault() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stored.newsEnabled, false); assert.equal(ids.newsPanel.hidden, true);
+  assert.equal(ids.newsPlayer.children.length, 0);
   assert.equal(ids.settings.hidden, true); assert.equal(ids.refreshBtn.disabled, false);
 });
 test('relay URL contains no provider keys and rejects non-deployment addresses', () => {
@@ -294,4 +326,28 @@ test('legacy locations migrate into editable stop entries without losing conditi
   assert.equal(api.targets({ stops: [{ type: 'bus', location: '신동아정문', condition: '동작08' }] })[0].value, '20726');
   assert.equal(api.targets({ stops: [{ type: 'bus', location: '20014', condition: '360,동작08' }] }).length, 2);
   assert.throws(() => api.targets({ stops: [{ type: 'bus', location: '20014', condition: '' }] }));
+});
+
+
+test('news accepts shared video and live URLs and rejects non-YouTube or malformed sources', () => {
+  const news = setup().TransitNews;
+  for (const url of [
+    'https://www.youtube.com/watch?v=abcdefghijk&extra=ignored',
+    'https://youtu.be/abcdefghijk?si=ignored',
+    'https://m.youtube.com/live/abcdefghijk',
+    'https://www.youtube.com/embed/abcdefghijk',
+    'https://www.youtube.com/shorts/abcdefghijk',
+  ]) {
+    const source = news.source(url);
+    assert.equal(source.watchURL, 'https://www.youtube.com/watch?v=abcdefghijk');
+    const embed = new URL(source.embedURL);
+    assert.equal(embed.origin, 'https://www.youtube.com');
+    assert.equal(embed.searchParams.get('mute'), '1');
+    assert.equal(embed.searchParams.get('autoplay'), '1');
+  }
+  for (const url of ['', 'javascript:alert(1)', 'http://youtube.com/watch?v=abcdefghijk',
+    'https://youtube.com.evil.test/watch?v=abcdefghijk', 'https://www.youtube.com/@ytnnews/live',
+    'https://youtube.com/watch?v=short', 'https://user:pass@youtube.com/watch?v=abcdefghijk']) {
+    assert.throws(() => news.source(url));
+  }
 });

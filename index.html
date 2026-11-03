@@ -54,11 +54,18 @@
     .settings-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; } #settings h2 { font-size: 18px; letter-spacing: 0; }
     form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; } label { display: grid; gap: 8px; }
     input { min-width: 0; width: 100%; background: var(--page); color: var(--ink); padding: 9px 10px; }
+    .token-control { display: flex; gap: 8px; } .token-control input { flex: 1; } .token-control button { flex-shrink: 0; }
+    input:disabled { background: var(--control); color: var(--muted); }
+    .news-toggle { display: flex; align-items: center; gap: 8px; } .news-toggle input { width: auto; }
+    .news-panel { width: 72%; margin-top: 28px; }
+    .news-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .news-head a { color: var(--muted); font-size: 13px; }
+    .news-player iframe { display: block; width: 100%; min-height: 200px; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #111; }
     .full { grid-column: 1 / -1; } details { color: var(--muted); font-size: 13px; } summary { cursor: pointer; padding: 7px 0; }
     pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
     #refreshStatus { font-size: 12px; color: var(--muted); } #saveStatus:empty { display: none; } #emptyState { color: var(--muted); }
     [hidden] { display: none !important; }
-    @media(max-width: 600px) { .panels, .refresh-hint, .renew-notice { width: 92%; } form, .stop-editor { grid-template-columns: 1fr; } .route-name { padding: 5px 7px; } .arrival { padding: 0 4px; } }
+    @media(max-width: 600px) { .panels, .refresh-hint, .renew-notice, .news-panel { width: 92%; } form, .stop-editor { grid-template-columns: 1fr; } .route-name { padding: 5px 7px; } .arrival { padding: 0 4px; } }
   </style>
 </head>
 
@@ -70,11 +77,13 @@
     <form id="settingsForm">
       <details class="full"><summary>중계 주소 · 기본 설정됨</summary><label>Apps Script 웹 앱 주소<input id="relayUrl" type="url" autocomplete="off"></label></details>
       <div id="stopEditor" class="full"></div><button id="addStopBtn" type="button" class="full">정류장 추가</button>
-      <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
+      <div><label for="relayToken">중계 접속 코드</label><div class="token-control"><input id="relayToken" type="password" autocomplete="new-password" placeholder="미설정" disabled><button id="editTokenBtn" type="button" aria-expanded="false" aria-controls="relayToken">수정하기</button></div></div>
       <button id="fullscreenBtn" type="button">전체화면 전환</button>
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.11</small></details>
+      <div class="full"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스 재생</label></div>
+      <label class="full">뉴스 영상 · 라이브 주소<input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.12</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -85,8 +94,14 @@
   <button id="renewNotice" class="renew-notice" type="button" hidden>아무데나 눌러서 새로고침</button>
   <p id="refreshHint" class="refresh-hint" hidden>아무데나 눌러 새로고침</p>
 
-  <script src="route-catalog.js?v=20261103.11"></script>
-  <script src="browser-api.js?v=20261103.11"></script>
-  <script src="script.js?v=20261103.11"></script>
+  <section id="newsPanel" class="news-panel" hidden aria-label="뉴스 재생">
+    <div class="news-head"><h2>뉴스</h2><a id="newsLink" target="_blank" rel="noopener noreferrer">유튜브에서 열기</a></div>
+    <div id="newsPlayer" class="news-player"></div>
+  </section>
+
+  <script src="news-player.js?v=20261103.12"></script>
+  <script src="route-catalog.js?v=20261103.12"></script>
+  <script src="browser-api.js?v=20261103.12"></script>
+  <script src="script.js?v=20261103.12"></script>
 </body>
 </html>

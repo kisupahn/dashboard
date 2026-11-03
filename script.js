@@ -10,15 +10,16 @@ updateClock(); setInterval(updateClock, 1000);
   'use strict';
   var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
-  var fields = ['relayUrl', 'relayToken', 'interval', 'textScale'];
-  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 60, textScale: 135 };
+  var fields = ['relayUrl', 'interval', 'textScale', 'newsUrl'];
+  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 60, textScale: 135, newsEnabled: true, newsUrl: TransitNews.defaultURL };
   var timer, generation = 0, controllers = [], autoCount = 0, awaitingManual = false;
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
   try {
     var saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && typeof saved === 'object') {
-      ['relayUrl', 'relayToken', 'interval', 'textScale', 'refreshPolicy', 'station', 'arsId'].forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
+      ['relayUrl', 'relayToken', 'interval', 'textScale', 'refreshPolicy', 'station', 'arsId', 'newsUrl'].forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
+      if (typeof saved.newsEnabled === 'boolean') settings.newsEnabled = saved.newsEnabled;
       if (Array.isArray(saved.stops)) settings.stops = saved.stops;
     }
   } catch (_) { $('saveStatus').textContent = '저장 정보를 읽지 못했습니다. 다시 입력하세요.'; }
@@ -28,6 +29,40 @@ updateClock(); setInterval(updateClock, 1000);
   settings.refreshPolicy = '60s-90';
   settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 60));
   fields.forEach(function (key) { $(key).value = settings[key]; });
+  var editingToken = false;
+  function lockToken() {
+    editingToken = false;
+    $('relayToken').value = ''; $('relayToken').disabled = true; $('relayToken').required = false;
+    $('relayToken').placeholder = settings.relayToken ? '저장됨' : '미설정';
+    $('editTokenBtn').textContent = settings.relayToken ? '수정하기' : '입력하기';
+    $('editTokenBtn').setAttribute('aria-expanded', 'false');
+  }
+  lockToken();
+  $('editTokenBtn').onclick = function () {
+    if (editingToken) { lockToken(); return; }
+    editingToken = true;
+    $('relayToken').value = ''; $('relayToken').disabled = false; $('relayToken').required = true;
+    $('relayToken').placeholder = '새 접속 코드'; $('relayToken').focus();
+    $('editTokenBtn').textContent = '취소'; $('editTokenBtn').setAttribute('aria-expanded', 'true');
+  };
+  var newsSignature = '';
+  function renderNews() {
+    $('newsEnabled').checked = settings.newsEnabled; $('newsUrl').value = settings.newsUrl;
+    var news = null;
+    try { if (settings.newsEnabled) news = TransitNews.source(settings.newsUrl); }
+    catch (_) { $('saveStatus').textContent = '설정에서 뉴스 영상 주소를 확인하세요.'; }
+    $('newsPanel').hidden = !news;
+    var nextSignature = news ? news.embedURL : '';
+    if (newsSignature === nextSignature) return;
+    newsSignature = nextSignature; $('newsPlayer').textContent = '';
+    if (!news) return;
+    $('newsLink').href = news.watchURL;
+    var frame = document.createElement('iframe'); frame.title = '뉴스 영상 재생';
+    frame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    frame.setAttribute('allowfullscreen', ''); frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    frame.src = news.embedURL; $('newsPlayer').appendChild(frame);
+  }
+  renderNews();
   function applyTextScale(value) {
     var scale = Math.min(180, Math.max(100, Number(value) || 135));
     document.documentElement.style.setProperty('--text-scale', String(scale / 100));
@@ -79,7 +114,8 @@ updateClock(); setInterval(updateClock, 1000);
   function toggle(open) {
     $('settings').hidden = !open;
     $('settingsBtn').setAttribute('aria-expanded', String(open));
-    if (open) { applyTextScale(settings.textScale); editStops(); $('relayToken').focus(); }
+    lockToken();
+    if (open) { applyTextScale(settings.textScale); $('newsEnabled').checked = settings.newsEnabled; $('newsUrl').value = settings.newsUrl; editStops(); $('closeSettingsBtn').focus(); }
     else { applyTextScale(settings.textScale); $('settingsBtn').focus(); }
   }
   $('settingsBtn').onclick = function () { toggle($('settings').hidden); };
@@ -225,31 +261,33 @@ updateClock(); setInterval(updateClock, 1000);
   }
   document.addEventListener('click', function (event) {
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
-    if (!node || node.closest('#settings, #settingsBtn, a, input, textarea, select, label, summary')) return;
+    if (!node || node.closest('#settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
     if (!$('refreshBtn').disabled) refresh(true);
   });
   $('settingsForm').onsubmit = function (event) {
     event.preventDefault();
     var next = {};
     fields.forEach(function (key) { next[key] = String($(key).value).trim(); });
+    next.relayToken = editingToken ? String($('relayToken').value).trim() : settings.relayToken;
+    next.newsEnabled = $('newsEnabled').checked;
     next.refreshPolicy = '60s-90';
     next.textScale = applyTextScale(next.textScale);
     next.stops = draft.map(function (s) { return Object.assign({}, s); });
     next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 60));
-    try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
+    try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); if (next.newsEnabled) TransitNews.source(next.newsUrl); }
     catch (error) { $('saveStatus').textContent = error.message; return; }
     settings = next;
     try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = ''; }
     catch (_) { $('saveStatus').textContent = '저장할 수 없어 이번 화면에서만 사용합니다.'; }
-    toggle(false); refresh(true);
+    toggle(false); renderNews(); refresh(true);
   };
   $('presetBtn').onclick = function () {
     draft = TransitAPI.migrateStops({ station: '노들/9/공항방향', arsId: '20726/동작08,20014/360' }); renderEditor();
   };
   $('clearBtn').onclick = function () {
-    settings = { relayUrl: defaultRelayUrl, relayToken: '', stops: [], interval: 60, textScale: 135, refreshPolicy: '60s-90' };
+    settings = { relayUrl: defaultRelayUrl, relayToken: '', stops: [], interval: 60, textScale: 135, refreshPolicy: '60s-90', newsEnabled: false, newsUrl: TransitNews.defaultURL };
     fields.forEach(function (key) { $(key).value = settings[key]; });
-    applyTextScale(settings.textScale); editStops();
+    applyTextScale(settings.textScale); lockToken(); renderNews(); editStops();
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = ''; }
     catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }
     refresh();
