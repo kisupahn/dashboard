@@ -40,18 +40,6 @@
   function label(t) {
     return (t.type === 'subway' ? '지하철 · ' : '버스 · ') + t.value + (t.route ? ' · ' + t.route : '') + (t.line ? ' · ' + (Number(t.line) - 1000) + '호선' : '') + (t.directionLabel || t.direction ? ' · ' + (t.directionLabel || t.direction) : '');
   }
-  function buildURL(type, settings) {
-    if (type === 'subway') {
-      if (!settings.subwayKey || !settings.station) throw error('지하철 인증키를 입력하세요.');
-      return 'https://swopenapi.seoul.go.kr/api/subway/' + encodeURIComponent(settings.subwayKey.trim()) + '/json/realtimeStationArrival/0/100/' + encodeURIComponent(settings.station);
-    }
-    if (!settings.busKey || !/^\d{9}$/.test(settings.routeId)) throw error('버스 인증키와 내부 노선 ID가 필요합니다.');
-    var url = new URL('https://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteAll');
-    url.searchParams.set('serviceKey', settings.busKey.trim());
-    url.searchParams.set('busRouteId', settings.routeId);
-    url.searchParams.set('resultType', 'json');
-    return url.href;
-  }
   function normalize(type, data) {
     if (!data || typeof data !== 'object') throw error('API 응답 형식이 올바르지 않습니다.');
     if (type === 'subway') {
@@ -81,23 +69,64 @@
     }
     return items.filter(function (v) { return v.arsId === target.value && v.routeId === target.routeId; });
   }
+  function relayURL(target, connection) {
+    if (!connection || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(connection.relayUrl || '')) throw error('설정에 Apps Script 웹 앱 주소(/exec)를 입력하세요.', 'CONFIG');
+    if (!connection.relayToken || connection.relayToken.length < 16) throw error('중계 접속 코드(16자 이상)를 입력하세요.', 'CONFIG');
+    var url = new URL(connection.relayUrl);
+    url.searchParams.set('type', target.type);
+    url.searchParams.set('token', connection.relayToken);
+    if (target.type === 'subway') url.searchParams.set('station', target.value);
+    else if (target.type === 'bus') url.searchParams.set('routeId', target.routeId);
+    return url.href;
+  }
+  var serial = 0;
+  function jsonp(url, signal) {
+    return new Promise(function (resolve, reject) {
+      if (signal && signal.aborted) { reject(error('조회가 취소되었습니다.', 'ABORT')); return; }
+      var callback = '__seoulRelay_' + Date.now() + '_' + (++serial);
+      var script = root.document.createElement('script');
+      var timer, settled = false;
+      function finish(err, data) {
+        if (settled) return; settled = true;
+        clearTimeout(timer);
+        if (signal) signal.removeEventListener('abort', abort);
+        script.remove();
+        // 취소 후 늦게 도착한 스크립트도 전역 오류를 만들지 않습니다.
+        root[callback] = function () {};
+        setTimeout(function () { delete root[callback]; }, 60000);
+        if (err) reject(err); else resolve({ ok: true, json: async function () { return data; } });
+      }
+      function abort() { finish(error('조회가 취소되었습니다.', 'ABORT')); }
+      root[callback] = function (data) { finish(null, data); };
+      script.onerror = function () { finish(error('중계 연결 실패. 웹 앱을 모든 사용자에게 배포했는지 확인하세요.', 'NETWORK')); };
+      var parsed = new URL(url); parsed.searchParams.set('callback', callback);
+      script.src = parsed.href; script.referrerPolicy = 'no-referrer';
+      timer = setTimeout(function () { finish(error('중계 응답 지연. 배포 주소와 접근 권한을 확인하세요.', 'TIMEOUT')); }, 35000);
+      if (signal) signal.addEventListener('abort', abort, { once: true });
+      root.document.head.appendChild(script);
+    });
+  }
   function createClient(fetchImpl) {
-    fetchImpl = fetchImpl || root.fetch.bind(root);
+    fetchImpl = fetchImpl || function (url, options) { return jsonp(url, options.signal); };
     var cache = new Map();
     return {
       async load(target, key, signal) {
         var type = target.type;
-        var url = buildURL(type, { station: target.value, routeId: target.routeId, subwayKey: key, busKey: key });
+        var url = relayURL(target, key);
         var hit = cache.get(url);
         if (hit && Date.now() - hit.time < 15000) return filter(type, hit.rows, target);
         if (hit && hit.pending) return filter(type, await hit.pending, target);
         var task = (async function () {
           var res;
           try { res = await fetchImpl(url, { signal: signal, credentials: 'omit', referrerPolicy: 'no-referrer' }); }
-          catch (_) { throw error('연결 실패: HTTPS·CORS·네트워크 또는 응답 지연을 확인하세요.', 'NETWORK'); }
+          catch (e) { if (e.code) throw e; throw error('중계 연결 실패. 배포 주소와 접근 권한을 확인하세요.', 'NETWORK'); }
           if (!res.ok) throw error('제공기관 HTTP 오류 (' + res.status + ')', 'HTTP');
           var data;
           try { data = await res.json(); } catch (_) { throw error('JSON 응답이 아닙니다. 키 승인과 제공기관 상태를 확인하세요.', 'FORMAT'); }
+          {
+            if (!data || !data.ok) throw error(data && data.error ? data.error.message : '중계 응답 오류', data && data.error ? data.error.code : 'FORMAT');
+            data = data.data;
+          }
           return normalize(type, data);
         })();
         var entry = { pending: task };
@@ -112,5 +141,5 @@
       clear: function () { cache.clear(); }
     };
   }
-  root.TransitAPI = { targets: targets, label: label, buildURL: buildURL, normalize: normalize, filter: filter, createClient: createClient };
+  root.TransitAPI = { targets: targets, label: label, normalize: normalize, filter: filter, createClient: createClient, relayURL: relayURL, jsonp: jsonp };
 })(typeof window !== 'undefined' ? window : globalThis);

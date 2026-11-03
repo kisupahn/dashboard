@@ -14,6 +14,7 @@ const busBody = { msgHeader: { headerCd: '0' }, msgBody: { itemList: [
   { busRouteId: '100100057', arsId: '20013', stNm: '노들역', rtNm: '360', arrmsg1: '반대편' },
 ] } };
 const reply = data => ({ ok: true, json: async () => data });
+const connection = { relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789' };
 test('official static IDs; user stop preserved instead of guessing a correction', () => {
   const ts = api.targets(settings);
   assert.equal(ts[0].via, '노량진');
@@ -25,15 +26,6 @@ test('official static IDs; user stop preserved instead of guessing a correction'
   assert.throws(() => api.targets({ arsId: '20014' }));
   assert.throws(() => api.targets({ arsId: '20014/없는노선' }));
   assert.equal(api.targets({ station: '노들/9/상행,노들/9/하행,노들/9/상행' }).length, 2);
-});
-test('requested bus service and encoding: no stationinfo dependency', () => {
-  const url = new URL(api.buildURL('bus', { routeId: '100100057', busKey: 'key+/=' }));
-  assert.equal(url.pathname, '/api/rest/arrive/getArrInfoByRouteAll');
-  assert.equal(url.searchParams.get('busRouteId'), '100100057');
-  assert.equal(url.searchParams.get('serviceKey'), 'key+/=');
-  assert.equal(url.searchParams.get('resultType'), 'json');
-  assert.equal(url.searchParams.has('arsId'), false);
-  assert(api.buildURL('subway', { station: '노들', subwayKey: 'key/+' }).endsWith(encodeURIComponent('노들')));
 });
 test('airport direction uses next station, independent of assumed up/down code', () => {
   const rows = api.normalize('subway', { realtimeArrivalList: [
@@ -64,34 +56,34 @@ test('provider errors are distinct from a successful empty response', () => {
 });
 test('same route shares an upstream request while applying different stop filters', async () => {
   let calls = 0;
-  const client = api.createClient(async () => { calls++; return reply(busBody); });
+  const client = api.createClient(async () => { calls++; return reply({ ok: true, data: busBody }); });
   const ts = api.targets({ arsId: '20014/360, 20013/360' });
-  const [a, b] = await Promise.all(ts.map(t => client.load(t, 'key')));
+  const [a, b] = await Promise.all(ts.map(t => client.load(t, connection)));
   assert.equal(calls, 1); assert.equal(a[0].arsId, '20014'); assert.equal(b[0].arsId, '20013');
-  client.clear(); await client.load(ts[0], 'key'); assert.equal(calls, 2);
+  client.clear(); await client.load(ts[0], connection); assert.equal(calls, 2);
 });
 test('network, HTTP, and invalid JSON failures are sanitized and not cached', async () => {
   const target = api.targets(settings)[2]; let calls = 0;
   const client = api.createClient(async () => { calls++; throw new Error('https://secret-key/'); });
-  for (let i = 0; i < 2; i++) await assert.rejects(client.load(target, 'secret-key'), e => e.code === 'NETWORK' && !e.message.includes('secret-key'));
+  for (let i = 0; i < 2; i++) await assert.rejects(client.load(target, connection), e => e.code === 'NETWORK' && !e.message.includes('secret-key'));
   assert.equal(calls, 2);
-  await assert.rejects(api.createClient(async () => ({ ok: false, status: 503 })).load(target, 'key'), { code: 'HTTP' });
-  await assert.rejects(api.createClient(async () => ({ ok: true, json: async () => { throw new Error('xml'); } })).load(target, 'key'), { code: 'FORMAT' });
+  await assert.rejects(api.createClient(async () => ({ ok: false, status: 503 })).load(target, connection), { code: 'HTTP' });
+  await assert.rejects(api.createClient(async () => ({ ok: true, json: async () => { throw new Error('xml'); } })).load(target, connection), { code: 'FORMAT' });
 });
 test('UI creates three independent cards, preserves keys, closes settings on save', async () => {
   function element() {
     let text = '';
-    return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
+    return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'subwayKey', 'busKey', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
   ids.settings.hidden = true;
   let stored;
   const ctx = setup({
-    document: { hidden: false, getElementById: id => ids[id], createElement: element, addEventListener() {} },
-    localStorage: { getItem: () => JSON.stringify({ ...settings, subwayKey: 's', busKey: 'b', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
+    document: { hidden: false, getElementById: id => ids[id], createElement: element, addEventListener() {}, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
+    localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
     setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
-    fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply(busBody); },
+    fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply({ ok: true, data: busBody }); },
   });
   vm.runInContext(readFileSync(new URL('../script.js', import.meta.url), 'utf8'), ctx);
   await new Promise(resolve => setImmediate(resolve));
@@ -103,6 +95,23 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
   ids.settingsForm.onsubmit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(stored.subwayKey, 's'); assert.equal(stored.busKey, 'b'); assert.equal(stored.interval, 180);
+  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 180);
   assert.equal(ids.settings.hidden, true); assert.equal(ids.refreshBtn.disabled, false);
+});
+test('relay URL contains no provider keys and rejects non-deployment addresses', () => {
+  const connection = { relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789' };
+  const url = new URL(api.relayURL(api.targets(settings)[2], connection));
+  assert.equal(url.searchParams.get('routeId'), '100100057');
+  assert.equal(url.searchParams.has('serviceKey'), false);
+  assert.equal(url.searchParams.get('token'), connection.relayToken);
+  assert.throws(() => api.relayURL({}, { ...connection, relayUrl: 'https://evil.example/exec' }));
+  assert.throws(() => api.relayURL({}, { ...connection, relayUrl: 'https://script.google.com/macros/s/test/dev' }));
+});
+test('relay envelope handles authentication and passes arrival data through filters', async () => {
+  const connection = { relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789' };
+  const target = api.targets(settings)[2];
+  const ok = api.createClient(async () => reply({ ok: true, data: busBody }));
+  assert.equal((await ok.load(target, connection))[0].arsId, '20014');
+  const auth = api.createClient(async () => reply({ ok: false, error: { code: 'AUTH', message: '접속 코드 불일치' } }));
+  await assert.rejects(auth.load(target, connection), { code: 'AUTH' });
 });

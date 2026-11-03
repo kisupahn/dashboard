@@ -4,8 +4,8 @@ updateClock(); setInterval(updateClock, 1000);
 (function () {
   'use strict';
   var storageKey = 'seoul-transit-settings-v1';
-  var fields = ['subwayKey', 'station', 'busKey', 'arsId', 'interval'];
-  var settings = { subwayKey: '', station: '노들/9/공항방향', busKey: '', arsId: '20276/동작08, 20014/360', interval: 180 };
+  var fields = ['relayUrl', 'relayToken', 'station', 'arsId', 'interval'];
+  var settings = { relayUrl: '', relayToken: '', station: '노들/9/공항방향',  arsId: '20276/동작08, 20014/360', interval: 180 };
   var timer, generation = 0, controllers = [];
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
@@ -18,7 +18,7 @@ updateClock(); setInterval(updateClock, 1000);
   function toggle(open) {
     $('settings').hidden = !open;
     $('settingsBtn').setAttribute('aria-expanded', String(open));
-    if (open) $('subwayKey').focus();
+    if (open) $('relayUrl').focus();
     else $('settingsBtn').focus();
   }
   $('settingsBtn').onclick = function () { toggle($('settings').hidden); };
@@ -48,11 +48,9 @@ updateClock(); setInterval(updateClock, 1000);
     if (run !== generation) return;
     card.status.textContent = '조회 중…'; card.status.className = 'meta';
     var controller = new AbortController(); controllers.push(controller);
-    var timeout = setTimeout(function () { controller.abort(); }, 12000);
+    var timeout = setTimeout(function () { controller.abort(); }, 40000);
     try {
-      var key = target.type === 'subway' ? settings.subwayKey : settings.busKey;
-      if (!key) throw new Error((target.type === 'subway' ? '지하철' : '버스') + ' 인증키를 설정하세요.');
-      var items = await client.load(target, key, controller.signal);
+      var items = await client.load(target, settings, controller.signal);
       if (run !== generation) return;
       render(card, target.type === 'subway' ? items.slice(0, 2) : items);
       if (target.type === 'bus' && items[0] && items[0].stop) card.heading.textContent = '버스 · ' + items[0].stop + ' (' + target.value + ')' + (target.route ? ' · ' + target.route : '');
@@ -99,7 +97,7 @@ updateClock(); setInterval(updateClock, 1000);
     var next = {};
     fields.forEach(function (key) { next[key] = String($(key).value).trim(); });
     next.interval = Math.min(3600, Math.max(180, Number(next.interval) || 180));
-    try { TransitAPI.targets(next); }
+    try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
     catch (error) { $('saveStatus').textContent = error.message; return; }
     settings = next;
     try { localStorage.setItem(storageKey, JSON.stringify(settings)); $('saveStatus').textContent = '설정을 저장했습니다.'; }
@@ -109,10 +107,10 @@ updateClock(); setInterval(updateClock, 1000);
   $('presetBtn').onclick = function () {
     $('station').value = '노들/9/공항방향';
     $('arsId').value = '20276/동작08, 20014/360';
-    $('saveStatus').textContent = '조회조건을 채웠습니다. 저장하고 닫기를 누르세요. 인증키는 유지됩니다.';
+    $('saveStatus').textContent = '조회조건을 채웠습니다. 저장하고 닫기를 누르세요. 중계 설정은 유지됩니다.';
   };
   $('clearBtn').onclick = function () {
-    settings = { subwayKey: '', station: '', busKey: '', arsId: '', interval: 180 };
+    settings = { relayUrl: '', relayToken: '', station: '',  arsId: '', interval: 180 };
     fields.forEach(function (key) { $(key).value = settings[key]; });
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = '저장 정보를 삭제했습니다.'; }
     catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }

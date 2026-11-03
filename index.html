@@ -48,18 +48,18 @@
   <section id="settings" hidden>
     <div class="settings-head"><h2>교통정보 설정</h2><button id="closeSettingsBtn" type="button" aria-label="설정 닫기">닫기</button></div>
     <form id="settingsForm">
-      <label>지하철 인증키<input id="subwayKey" type="password" autocomplete="off"></label>
+      <label class="full">Apps Script 웹 앱 주소<input id="relayUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
       <label>지하철 · 역명/호선/방향<input id="station" placeholder="노들/9/공항방향" maxlength="500"></label>
-      <label>버스 인증키 (Decoding)<input id="busKey" type="password" autocomplete="off"></label>
+      <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" minlength="16"></label>
       <label>버스 · 정류소/노선<input id="arsId" placeholder="20276/동작08, 20014/360" maxlength="100"></label>
       <label>갱신 간격 (초, 최소 180)<input id="interval" type="number" min="180" max="3600" value="180" required></label>
-      <div class="full meta">여러 조건은 쉼표로 구분합니다. 버스는 노선 필수. 기본 3분 갱신 · 수동 조회도 호출량에 포함됩니다. 키는 이 브라우저에 저장합니다.</div>
+      <div class="full meta">여러 조건은 쉼표로 구분합니다. 버스는 노선 필수. 기본 3분 갱신 · 수동 조회도 호출량에 포함됩니다. API 키는 Apps Script에 저장합니다.</div>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
-  <p id="refreshStatus" role="status">설정에서 키와 조회할 역·정류소를 입력하세요.</p>
+  <p id="refreshStatus" role="status">설정에서 중계 주소와 조회할 역·정류소를 입력하세요.</p>
   <p id="saveStatus" role="status"></p>
-  <p id="emptyState">설정에서 키와 조회할 역·정류소를 추가하세요. 여러 곳은 쉼표로 구분합니다.</p>
+  <p id="emptyState">설정에서 중계 주소와 조회할 역·정류소를 추가하세요. 여러 곳은 쉼표로 구분합니다.</p>
   <main class="panels" id="arrivalPanels"></main>
   <footer>자료: 서울 열린데이터광장 · 서울특별시 버스도착정보조회 서비스<br>API 생성 시각과 현재 시각은 다를 수 있습니다.</footer>
   <script src="route-catalog.js"></script>
