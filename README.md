@@ -2,7 +2,7 @@
 
 삼성 스마트모니터 M7 세로 화면용 정적 대시보드입니다. GitHub Pages 화면이 Google Apps Script를 통해 서울시 지하철 및 서울특별시 버스도착정보를 조회합니다. 직접 HTTP API를 호출하던 방식은 연결 문제로 제거했습니다.
 
-**처음 설정은 [Apps Script 배포 안내](apps-script/README.md)를 따라 진행하세요.** Google 계정에서 새 웹 앱을 배포한 뒤, 대시보드에 `/exec` URL과 접속 코드를 입력합니다. 별도 PC 서버는 필요하지 않습니다.
+**코드 편집 없이 설치하려면 `npm run setup:relay`를 실행하세요.** [자동 설치 안내](apps-script/README.md)를 참고하세요. Google 계정에서 새 웹 앱을 배포한 뒤, 대시보드에 `/exec` URL과 접속 코드를 입력합니다. 별도 PC 서버는 필요하지 않습니다.
 
 ## 사용
 

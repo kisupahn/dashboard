@@ -2,6 +2,36 @@
 
 GitHub Pages → Google Apps Script(HTTPS, JSONP) → 서울시 API(HTTP) 순으로 조회합니다. PC 서버나 유료 호스팅은 필요하지 않으며 Google Apps Script의 실행·외부 요청 한도는 적용됩니다.
 
+## 코드 편집 없이 자동 설치 (권장)
+
+PC에 Node.js 22 이상이 있으면 저장소를 내려받아 터미널에서 실행하세요.
+
+```sh
+git clone https://github.com/kisupahn/dashboard.git
+cd dashboard
+npm run setup:relay
+```
+
+이미 내려받은 저장소는 `git pull` 후 `npm run setup:relay`만 실행합니다. npm이 Google 공식 clasp CLI를 받아 실행하므로 인터넷 연결이 필요합니다.
+
+1. 처음 한 번 [Apps Script 사용자 설정](https://script.google.com/home/usersettings)에서 **Google Apps Script API**를 켭니다.
+2. 설치 도구가 여는 Google 로그인에서 프로젝트 관리 권한을 승인합니다.
+3. 터미널에 지하철 키와 버스 Decoding 키를 입력합니다. 입력 내용은 화면에 표시되지 않습니다.
+4. 도구가 새 프로젝트 생성, 코드·설정 업로드, 웹 앱 배포를 진행합니다. 기존 메모 프로젝트는 수정하지 않습니다.
+5. 완료 시 출력되는 **중계 주소**와 **중계 접속 코드**를 대시보드 설정에 넣습니다.
+
+Google에서 별도의 실행 권한 승인을 요구하면 출력된 프로젝트 링크를 열고 함수 목록에서 `authorizeAndTest`를 선택해 실행·승인합니다. 코드는 입력하거나 편집하지 않습니다. 조직 계정의 익명 배포 제한은 자동으로 풀 수 없습니다.
+
+키는 로컬 `.relay-local/config.json`과 Google 프로젝트의 비공개 소스 `RelayConfig.gs`에 보관합니다. 이 폴더는 Git에서 제외됩니다. 자동 설치에서는 스크립트 속성을 직접 입력하지 않습니다. 접속 코드는 자동 생성되며 재실행 시 유지됩니다. 키 입력 때 Enter를 누르면 기존 값을 사용합니다.
+
+업데이트도 **`npm run setup:relay`**로 합니다. `.relay-local`에 저장한 프로젝트와 배포를 재사용합니다. 실패 시 이 폴더를 지우지 말고 오류를 해결한 뒤 재실행합니다. 이 폴더와 clasp 로그인 파일을 공유하지 마세요.
+
+설정 파일 생성과 키 직렬화는 로컬 테스트로 검증했습니다. 실제 계정 로그인·프로젝트 생성·배포는 Google 계정 연결이 없어 실행하지 못했습니다. CLI 및 로그인 동작은 [Google 공식 clasp 문서](https://github.com/google/clasp)를 기준으로 구현했습니다.
+
+## 수동 설치 (선택 사항)
+
+자동 설치를 사용하면 아래 절차는 필요 없습니다.
+
 ## 1. 새 프로젝트 만들기
 
 [Google Apps Script](https://script.google.com/home/start)에서 **새 프로젝트**를 만드세요. 기존 메모 프로젝트는 그대로 둡니다. 하나의 프로젝트에 `doGet`을 두 개 넣으면 충돌하므로 이 파일을 기존 `doGet` 아래에 붙여넣지 마세요.

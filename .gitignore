@@ -4,3 +4,7 @@
 node_modules/
 coverage/
 *.log
+
+.relay-local/
+.clasprc.json
+.clasp.json

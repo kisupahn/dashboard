@@ -8,7 +8,10 @@ function doGet(e) {
   }
   var result;
   try {
-    var props = PropertiesService.getScriptProperties();
+    var stored = PropertiesService.getScriptProperties();
+    var props = { getProperty: function (name) {
+      return typeof AUTOMATED_RELAY_CONFIG !== 'undefined' ? AUTOMATED_RELAY_CONFIG[name] : stored.getProperty(name);
+    } };
     var token = props.getProperty('DASHBOARD_TOKEN');
     if (!token || token.length < 16 || p.token !== token) throw relayError_('AUTH', '중계 접속 코드가 일치하지 않습니다.');
     if (p.type === 'health') {
