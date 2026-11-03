@@ -10,13 +10,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --page: #ffffff; --ink: #1a1c20; --card: #ffffff; --edge: #dedfe3; --muted: #757982; --control: #f5f5f6; --error: #a83832; }
+    :root { --text-scale: 1.35; --page: #ffffff; --ink: #1a1c20; --card: #ffffff; --edge: #dedfe3; --muted: #757982; --control: #f5f5f6; --error: #a83832; }
     * { box-sizing: border-box; }
     body { margin: 0 auto; padding: clamp(18px, 3vw, 40px); max-width: 1200px; background: var(--page); color: var(--ink); font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; -webkit-font-smoothing: antialiased; }
     header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 28px; }
     header > div { margin-left: auto; }
-    h1 { flex: 1 0 100%; font-size: clamp(48px, 11vw, 148px); font-weight: 500; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.045em; margin: 0; }
-    h2 { margin: 0; font-size: clamp(25px, 3.5vw, 40px); letter-spacing: -.04em; line-height: 1.35; word-break: keep-all; }
+    h1 { flex: 1 0 100%; font-size: calc(clamp(48px, 11vw, 148px) * var(--text-scale)); font-weight: 500; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.045em; margin: 0; }
+    h2 { margin: 0; font-size: calc(clamp(25px, 3.5vw, 40px) * var(--text-scale)); letter-spacing: -.04em; line-height: 1.35; word-break: keep-all; }
     button, input { font: inherit; border: 1px solid var(--edge); border-radius: 8px; padding: 10px 14px; }
     button { cursor: pointer; background: var(--control); color: var(--ink); } button:disabled { opacity: .45; }
     button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--muted); outline-offset: 3px; }
@@ -26,7 +26,7 @@
     .card-head h2 { flex: 1 1 140px; min-width: 0; }
     .transport-icon { width: 38px; height: 38px; color: var(--ink); flex: 0 0 38px; }
     .transport-icon svg { width: 100%; height: 100%; display: block; }
-    .date { flex-basis: 100%; margin: -8px 0 0; color: var(--muted); font-size: clamp(16px, 2.1vw, 24px); }
+    .date { flex-basis: 100%; margin: -8px 0 0; color: var(--muted); font-size: calc(clamp(16px, 2.1vw, 24px) * var(--text-scale)); }
     .stop-editor { position: relative; margin: 12px 0; padding: 14px; border: 1px solid var(--edge); border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .stop-editor legend { font-weight: 600; padding: 0 6px; }
     .stop-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 6px; }
@@ -36,7 +36,7 @@
     .loading { position: absolute; top: 24px; right: 18px; margin: 0; color: var(--muted); font-size: 12px; }
     .arrivals { margin-top: 18px; }
     .route-row { display: grid; grid-template-columns: minmax(0, .95fr) repeat(2, minmax(0, 1fr)); align-items: center; padding: 14px 0; gap: 10px; }
-    .route-name { justify-self: start; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px; max-width: 100%; margin: 0; padding: 6px 10px; border: 1px solid var(--edge); border-radius: 9px; color: var(--ink); font-size: clamp(16px, 2.2vw, 24px); font-weight: 600; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+    .route-name { justify-self: start; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px; max-width: 100%; margin: 0; padding: 6px 10px; border: 1px solid var(--edge); border-radius: 9px; color: var(--ink); font-size: calc(clamp(16px, 2.2vw, 24px) * var(--text-scale)); font-weight: 600; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
     .route-name.village, .route-name.local { color: #208047; }
     .route-name.trunk { color: #2863b5; }
     .route-name.line9 { color: #967d32; }
@@ -45,10 +45,10 @@
     .destination { color: var(--muted); font-size: .72em; font-weight: 400; white-space: nowrap; }
     .route-error { grid-column: 1 / -1; margin: 4px 0 0; }
     .arrival { min-width: 0; min-height: 64px; padding: 0 8px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-    .arrival p { font-size: clamp(19px, 3.4vw, 40px); font-weight: 600; line-height: 1.2; word-break: keep-all; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--ink); margin: 0; }
-    .arrival small { color: var(--muted); font-size: clamp(14px, 2vw, 22px); white-space: nowrap; line-height: 1.2; }
-    .renew-notice { width: 72%; min-height: 200px; font-size: 32px; background: var(--page); }
-    .refresh-hint { width: 72%; text-align: center; color: var(--muted); font-size: 13px; margin: 22px 0 0; }
+    .arrival p { font-size: calc(clamp(19px, 3.4vw, 40px) * var(--text-scale)); font-weight: 600; line-height: 1.2; word-break: keep-all; font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--ink); margin: 0; }
+    .arrival small { color: var(--muted); font-size: calc(clamp(14px, 2vw, 22px) * var(--text-scale)); word-break: keep-all; line-height: 1.2; }
+    .renew-notice { width: 72%; min-height: 200px; font-size: calc(32px * var(--text-scale)); background: var(--page); }
+    .refresh-hint { width: 72%; text-align: center; color: var(--muted); font-size: calc(13px * var(--text-scale)); margin: 22px 0 0; }
     .error { color: var(--error); line-height: 1.5; font-size: 14px; }
     #settings { margin: 0 0 24px auto; max-width: 640px; padding: 18px; background: var(--card); border: 1px solid var(--edge); border-radius: 10px; }
     .settings-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; } #settings h2 { font-size: 18px; letter-spacing: 0; }
@@ -72,8 +72,9 @@
       <div id="stopEditor" class="full"></div><button id="addStopBtn" type="button" class="full">정류장 추가</button>
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <button id="fullscreenBtn" type="button">전체화면 전환</button>
+      <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="30" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.9</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.10</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -84,8 +85,8 @@
   <button id="renewNotice" class="renew-notice" type="button" hidden>새로고침</button>
   <p id="refreshHint" class="refresh-hint" hidden>아무데나 눌러 새로고침</p>
 
-  <script src="route-catalog.js?v=20261103.9"></script>
-  <script src="browser-api.js?v=20261103.9"></script>
-  <script src="script.js?v=20261103.9"></script>
+  <script src="route-catalog.js?v=20261103.10"></script>
+  <script src="browser-api.js?v=20261103.10"></script>
+  <script src="script.js?v=20261103.10"></script>
 </body>
 </html>

@@ -76,13 +76,13 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue']) ids[id] = element();
   ids.settings.hidden = true;
   let stored;
   const events = {}, timers = [];
   let fullscreenCalls = 0;
   const ctx = setup({
-    document: { hidden: false, documentElement: { requestFullscreen: async () => { fullscreenCalls++; } }, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
+    document: { hidden: false, documentElement: { style: { setProperty(key, value) { this[key] = value; } }, requestFullscreen: async () => { fullscreenCalls++; } }, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
     localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
     setTimeout: (fn, ms) => { const task = { fn, ms, cleared: false }; timers.push(task); return task; }, clearTimeout(task) { if (task) task.cleared = true; }, setInterval: () => 0,
     fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply({ ok: true, data: busBody }); },
@@ -132,11 +132,19 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ids.settings.hidden, true);
   ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
+  assert.equal(ids.textScale.value, 135);
+  ids.textScale.value = '170'; ids.textScale.oninput();
+  assert.equal(ctx.document.documentElement.style['--text-scale'], '1.7');
+  ids.closeSettingsBtn.onclick();
+  assert.equal(ctx.document.documentElement.style['--text-scale'], '1.35');
+  ids.settingsBtn.onclick();
+  ids.textScale.value = '160'; ids.textScale.oninput();
   ids.stopEditor.children[0].children[1].children[1].onclick();
   await ids.fullscreenBtn.onclick(); assert.equal(fullscreenCalls, 1);
   ids.settingsForm.onsubmit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 60);
+  assert.equal(stored.relayToken, 'test-token-123456789'); assert.equal(stored.subwayKey, undefined); assert.equal(stored.interval, 60); assert.equal(stored.textScale, 160);
+  assert.equal(ctx.document.documentElement.style['--text-scale'], '1.6');
   assert.equal(stored.stops[0].location, '20014');
   assert.equal(stored.stops[1].location, '20276');
   assert.equal(stored.station, undefined);

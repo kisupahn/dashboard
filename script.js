@@ -10,21 +10,29 @@ updateClock(); setInterval(updateClock, 1000);
   'use strict';
   var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
-  var fields = ['relayUrl', 'relayToken', 'interval'];
-  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 30 };
+  var fields = ['relayUrl', 'relayToken', 'interval', 'textScale'];
+  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 30, textScale: 135 };
   var timer, generation = 0, controllers = [], autoCount = 0, awaitingManual = false;
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
   try {
     var saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && typeof saved === 'object') {
-      ['relayUrl', 'relayToken', 'interval', 'station', 'arsId'].forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
+      ['relayUrl', 'relayToken', 'interval', 'textScale', 'station', 'arsId'].forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
       if (Array.isArray(saved.stops)) settings.stops = saved.stops;
     }
   } catch (_) { $('saveStatus').textContent = '저장 정보를 읽지 못했습니다. 다시 입력하세요.'; }
   if (!settings.relayUrl) settings.relayUrl = defaultRelayUrl;
   settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 30));
   fields.forEach(function (key) { $(key).value = settings[key]; });
+  function applyTextScale(value) {
+    var scale = Math.min(180, Math.max(100, Number(value) || 135));
+    document.documentElement.style.setProperty('--text-scale', String(scale / 100));
+    $('textScale').value = scale; $('textScaleValue').textContent = scale + '%';
+    return scale;
+  }
+  settings.textScale = applyTextScale(settings.textScale);
+  $('textScale').oninput = function () { applyTextScale(this.value); };
   settings.stops = TransitAPI.migrateStops(settings);
   var draft = [];
   function button(text, action) {
@@ -68,8 +76,8 @@ updateClock(); setInterval(updateClock, 1000);
   function toggle(open) {
     $('settings').hidden = !open;
     $('settingsBtn').setAttribute('aria-expanded', String(open));
-    if (open) { editStops(); $('relayToken').focus(); }
-    else $('settingsBtn').focus();
+    if (open) { applyTextScale(settings.textScale); editStops(); $('relayToken').focus(); }
+    else { applyTextScale(settings.textScale); $('settingsBtn').focus(); }
   }
   $('settingsBtn').onclick = function () { toggle($('settings').hidden); };
   $('closeSettingsBtn').onclick = function () { toggle(false); };
@@ -220,6 +228,7 @@ updateClock(); setInterval(updateClock, 1000);
     event.preventDefault();
     var next = {};
     fields.forEach(function (key) { next[key] = String($(key).value).trim(); });
+    next.textScale = applyTextScale(next.textScale);
     next.stops = draft.map(function (s) { return Object.assign({}, s); });
     next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 30));
     try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
@@ -233,9 +242,9 @@ updateClock(); setInterval(updateClock, 1000);
     draft = TransitAPI.migrateStops({ station: '노들/9/공항방향', arsId: '20726/동작08,20014/360' }); renderEditor();
   };
   $('clearBtn').onclick = function () {
-    settings = { relayUrl: defaultRelayUrl, relayToken: '', stops: [], interval: 30 };
+    settings = { relayUrl: defaultRelayUrl, relayToken: '', stops: [], interval: 30, textScale: 135 };
     fields.forEach(function (key) { $(key).value = settings[key]; });
-    editStops();
+    applyTextScale(settings.textScale); editStops();
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = ''; }
     catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }
     refresh();
