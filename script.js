@@ -6,7 +6,7 @@ updateClock(); setInterval(updateClock, 1000);
   var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
   var fields = ['relayUrl', 'relayToken', 'station', 'arsId', 'interval'];
-  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 180 };
+  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 30 };
   var timer, generation = 0, controllers = [];
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
@@ -15,7 +15,7 @@ updateClock(); setInterval(updateClock, 1000);
     if (saved && typeof saved === 'object') fields.forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
   } catch (_) { $('saveStatus').textContent = '저장 정보를 읽지 못했습니다. 다시 입력하세요.'; }
   if (!settings.relayUrl) settings.relayUrl = defaultRelayUrl;
-  settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 180));
+  settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 30));
   fields.forEach(function (key) { $(key).value = settings[key]; });
   function toggle(open) {
     $('settings').hidden = !open;
@@ -74,7 +74,7 @@ updateClock(); setInterval(updateClock, 1000);
         function tick() {
           var text = slot ? (slot.item ? TransitAPI.presentation(slot.item, Date.now()).message : slot.message) : '';
           message.textContent = concise(text);
-          label.textContent = text && message.textContent ? (slot.item ? slot.item.detail : slot.label) : '';
+          label.textContent = text && message.textContent ? (slot.item && slot.item.kind === 'subway' ? slot.item.detail : slot.label) : '';
         }
         tick(); if (slot && slot.item) card.ticks.push(tick);
         cell.appendChild(message); cell.appendChild(label); row.appendChild(cell);
@@ -154,7 +154,7 @@ updateClock(); setInterval(updateClock, 1000);
     event.preventDefault();
     var next = {};
     fields.forEach(function (key) { next[key] = String($(key).value).trim(); });
-    next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 180));
+    next.interval = Math.min(3600, Math.max(30, Number(next.interval) || 30));
     try { TransitAPI.targets(next); TransitAPI.relayURL({ type: 'health' }, next); }
     catch (error) { $('saveStatus').textContent = error.message; return; }
     settings = next;
@@ -168,7 +168,7 @@ updateClock(); setInterval(updateClock, 1000);
     $('saveStatus').textContent = '';
   };
   $('clearBtn').onclick = function () {
-    settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '',  arsId: '', interval: 180 };
+    settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '',  arsId: '', interval: 30 };
     fields.forEach(function (key) { $(key).value = settings[key]; });
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = ''; }
     catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }

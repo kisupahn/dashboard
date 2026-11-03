@@ -64,8 +64,8 @@
       <label>지하철 · 역명/호선/방향<input id="station" placeholder="노들/9/공항방향" maxlength="500"></label>
       <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <label>버스 · 정류소/노선<input id="arsId" placeholder="20726/동작08, 20014/360" maxlength="100"></label>
-      <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="180" required></label>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.7</small></details>
+      <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="30" required></label>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.8</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -75,8 +75,8 @@
   <main class="panels" id="arrivalPanels"></main>
   <p id="refreshHint" class="refresh-hint" hidden>아무데나 눌러 새로고침</p>
 
-  <script src="route-catalog.js?v=20261103.7"></script>
-  <script src="browser-api.js?v=20261103.7"></script>
-  <script src="script.js?v=20261103.7"></script>
+  <script src="route-catalog.js?v=20261103.8"></script>
+  <script src="browser-api.js?v=20261103.8"></script>
+  <script src="script.js?v=20261103.8"></script>
 </body>
 </html>

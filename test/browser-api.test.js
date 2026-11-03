@@ -108,8 +108,8 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(cards[0].children[3], undefined);
   for (const card of cards) assert.equal(card.children[2].children.length, 1);
   assert.equal(cards[0].children[2].children[0].children[1].children[0].textContent, '');
-  assert.equal(cards[1].children[2].children[0].children[1].children[0].textContent, '3분');
-  assert.equal(cards[1].children[2].children[0].children[2].children[0].textContent, '10분');
+  assert.equal(cards[1].children[2].children[0].children[1].children[0].textContent, '3분 0초');
+  assert.equal(cards[1].children[2].children[0].children[2].children[0].textContent, '10분 0초');
   assert.equal(cards[1].children[2].children[0].children.length, 3);
   events.click({ target: { closest: () => true } });
   assert.equal(ids.refreshBtn.disabled, false);
@@ -229,4 +229,26 @@ test('same stop combines multiple routes while different stop IDs and transport 
   const rows = api.routeRows(groups[1].targets.map(target => ({ target, items: [], pending: true, error: '' })));
   assert.equal(rows.length, 2); assert.equal(rows[0].name, '360'); assert.equal(rows[1].name, '동작08');
   assert.equal(rows[0].slots.length, 2); assert.equal(rows[0].slots[0], null);
+});
+test('bus countdown advances every second while stop distance remains unchanged', () => {
+  const reference = Date.parse('2026-11-03T21:00:00+09:00');
+  const slots = api.arrivalSlots('bus', [{ message: '3분20초후[2번째전]', secondMessage: '8분후[5번째전]', referenceAt: reference }]);
+  assert.equal(api.presentation(slots[0].item, reference + 15000).message, '약 3분 5초 후');
+  assert.equal(api.presentation(slots[0].item, reference + 16000).message, '약 3분 4초 후');
+  assert.equal(api.presentation(slots[1].item, reference + 15000).message, '약 7분 45초 후');
+  assert.equal(slots[0].label, '2번째 전');
+  assert.equal(slots[1].label, '5번째 전');
+  assert.equal(api.presentation(slots[0].item, reference + 300000).message, '예정 시각 경과 · 새 정보 대기');
+});
+test('bus source timestamp and relay cache age are accounted for without rebasing each tick', async () => {
+  const reference = Date.parse('2026-11-03T21:00:00+09:00');
+  const response = { ok: true, fetchedAt: new Date(reference).toISOString(), data: busBody };
+  const client = api.createClient(async () => reply(response));
+  const items = await client.load(api.targets(settings)[2], connection);
+  const slot = api.arrivalSlots('bus', items)[0];
+  assert.equal(api.presentation(slot.item, reference + 20000).message, '약 2분 40초 후');
+  const stamped = { ...slot.item, sourceTime: '20261103205930' };
+  assert.equal(api.presentation(stamped, reference).message, '약 2분 30초 후');
+  const state = { ...slot.item, message: '곧 도착' };
+  assert.equal(api.presentation(state, reference + 20000).message, '곧 도착');
 });

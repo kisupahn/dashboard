@@ -51,7 +51,7 @@
         var position = available && message.match(/(\d+)\s*(번째|정거장|정류장)\s*전/);
         var label = position ? position[1] + position[2] + ' 전' : '';
         var primary = position ? message.replace(position[0], '').replace(/\s*[\[(]\s*[\])]\s*/g, '').trim() : message;
-        slots.push(available ? { message: primary, label: label } : null);
+        slots.push(available ? { message: primary, label: label, item: { kind: 'bus', message: primary, sourceTime: items[0].sourceTime || '', referenceAt: items[0].referenceAt, arrivalSeconds: null } } : null);
       });
     } else slots = items.slice(0, 2).map(function (item) { return { item: item, label: item.title.split(/\s*-\s*/)[0], message: item.message }; });
     return [slots[0] || null, slots[1] || null];
@@ -117,7 +117,7 @@
     if (!data.msgBody || !Object.prototype.hasOwnProperty.call(data.msgBody, 'itemList')) throw error('버스 응답 형식이 올바르지 않습니다.');
     var rows = data.msgBody.itemList || [];
     if (!Array.isArray(rows)) rows = [rows];
-    return rows.map(function (v) { return { routeType: String(v.routeType || ''), title: String(v.busRouteAbrv || v.rtNm || '버스'), secondMessage: String(v.arrmsg2 || ''), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
+    return rows.map(function (v) { return { kind: 'bus', routeType: String(v.routeType || ''), title: String(v.busRouteAbrv || v.rtNm || '버스'), secondMessage: String(v.arrmsg2 || ''), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
   }
   function filter(type, items, target) {
     if (type === 'subway') {
@@ -129,11 +129,13 @@
   }
   function presentation(item, now) {
     var original = { message: item.message, note: '' };
-    if (item.kind !== 'subway') return original;
-    var stamp = item.sourceTime.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
-    if (!stamp) return { message: item.message, note: '생성 시각 확인 불가 · 원본 안내' };
-    // 제공기관 시각은 한국 시각입니다. 브라우저가 어느 시간대여도 같은 시각으로 계산합니다.
-    var generated = Date.UTC(+stamp[1], +stamp[2] - 1, +stamp[3], +stamp[4] - 9, +stamp[5], +stamp[6]);
+    if (item.kind !== 'subway' && item.kind !== 'bus') return original;
+    var source = String(item.sourceTime || '');
+    if (/^\d{14}$/.test(source)) source = source.replace(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/, '$1-$2-$3 $4:$5:$6');
+    var stamp = source.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+    // 원천 생성 시각은 한국 시간. 없으면 버스는 중계의 실제 조회 시각을 기준으로 합니다.
+    var generated = stamp ? Date.UTC(+stamp[1], +stamp[2] - 1, +stamp[3], +stamp[4] - 9, +stamp[5], +stamp[6]) : item.kind === 'bus' ? item.referenceAt : NaN;
+    if (!Number.isFinite(generated)) return { message: item.message, note: '생성 시각 확인 불가 · 원본 안내' };
     var age = Math.floor((now - generated) / 1000);
     if (age < -60) return { message: item.message, note: '기기 시각 확인 필요 · 원본 안내' };
     age = Math.max(0, age);
@@ -230,6 +232,9 @@
             data = data.data;
           }
           var rows = normalize(type, data);
+          var fetchedAt = Date.parse(envelope.fetchedAt);
+          var referenceAt = Number.isFinite(fetchedAt) ? fetchedAt : Date.now();
+          rows.forEach(function (item) { if (item.kind === 'bus') item.referenceAt = referenceAt; });
           rows.relayInfo = { forceSupported: !!(envelope.capabilities && envelope.capabilities.forceRefresh), cacheBypass: envelope.cacheBypass === true, fetchedAt: envelope.fetchedAt || '' };
           return rows;
         })();
