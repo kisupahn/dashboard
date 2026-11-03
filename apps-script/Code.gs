@@ -1,5 +1,5 @@
 // 교통정보 전용 프로젝트에 붙여넣으세요. 기존 메모 프로젝트의 doGet과 합치지 마세요.
-// 스크립트 속성: SEOUL_SUBWAY_API_KEY, SEOUL_BUS_API_KEY, DASHBOARD_TOKEN(16자 이상)
+// 스크립트 속성: SEOUL_SUBWAY_API_KEY, SEOUL_BUS_API_KEY, DASHBOARD_TOKEN(빈 값 제외)
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -13,7 +13,7 @@ function doGet(e) {
       return typeof AUTOMATED_RELAY_CONFIG !== 'undefined' ? AUTOMATED_RELAY_CONFIG[name] : stored.getProperty(name);
     } };
     var token = props.getProperty('DASHBOARD_TOKEN');
-    if (!token || token.length < 16 || p.token !== token) throw relayError_('AUTH', '중계 접속 코드가 일치하지 않습니다.');
+    if (!token || p.token !== token) throw relayError_('AUTH', '중계 접속 코드가 일치하지 않습니다.');
     if (p.type === 'health') {
       result = { ok: true, version: 2, configured: { subway: !!props.getProperty('SEOUL_SUBWAY_API_KEY'), bus: !!props.getProperty('SEOUL_BUS_API_KEY') } };
     } else {

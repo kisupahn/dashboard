@@ -157,3 +157,7 @@ test('diagnostic exposes conflicting source estimates without changing either in
   assert(text.includes('원본 안내문으로 계산: 약 6분 51초 후'));
   assert.equal(item.message, '8분 35초 후 (구반포)');
 });
+test('access code has no minimum length but must be nonempty', () => {
+  assert.equal(new URL(api.relayURL(api.targets(settings)[2], { ...connection, relayToken: 'a' })).searchParams.get('token'), 'a');
+  assert.throws(() => api.relayURL(api.targets(settings)[2], { ...connection, relayToken: '' }), { code: 'CONFIG' });
+});

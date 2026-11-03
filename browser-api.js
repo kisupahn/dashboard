@@ -108,7 +108,7 @@
   }
   function relayURL(target, connection) {
     if (!connection || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(connection.relayUrl || '')) throw error('설정에 Apps Script 웹 앱 주소(/exec)를 입력하세요.', 'CONFIG');
-    if (!connection.relayToken || connection.relayToken.length < 16) throw error('중계 접속 코드(16자 이상)를 입력하세요.', 'CONFIG');
+    if (!connection.relayToken) throw error('중계 접속 코드를 입력하세요.', 'CONFIG');
     var url = new URL(connection.relayUrl);
     url.searchParams.set('type', target.type);
     url.searchParams.set('token', connection.relayToken);

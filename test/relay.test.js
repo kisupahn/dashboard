@@ -59,3 +59,10 @@ test('manual refresh bypasses cached API data while automatic requests share it'
   assert.equal(manual.cacheBypass, true); assert.equal(app.calls.length, 2);
   app.get(p); assert.equal(app.calls.length, 2);
 });
+test('one-character access code works; blank and incorrect codes are rejected', () => {
+  const app = relay({ props: { ...props, DASHBOARD_TOKEN: 'a' } });
+  assert.equal(decode(app.get({ ...params, token: 'a', type: 'health' })).ok, true);
+  assert.equal(decode(app.get({ ...params, token: 'b', type: 'health' })).error.code, 'AUTH');
+  const blank = relay({ props: { ...props, DASHBOARD_TOKEN: '' } });
+  assert.equal(decode(blank.get({ ...params, token: '', type: 'health' })).error.code, 'AUTH');
+});

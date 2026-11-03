@@ -51,7 +51,7 @@
     <form id="settingsForm">
       <label class="full">Apps Script 웹 앱 주소<input id="relayUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
       <label>지하철 · 역명/호선/방향<input id="station" placeholder="노들/9/공항방향" maxlength="500"></label>
-      <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" minlength="16"></label>
+      <label>중계 접속 코드<input id="relayToken" type="password" autocomplete="off" required></label>
       <label>버스 · 정류소/노선<input id="arsId" placeholder="20726/동작08, 20014/360" maxlength="100"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="180" required></label>
       <div class="full meta">여러 조건은 쉼표로 구분합니다. 버스는 노선 필수. 기본 3분 · 간격을 줄이거나 수동 조회하면 API 사용량이 늘어납니다. API 키는 Apps Script에 저장합니다.</div>
