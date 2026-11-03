@@ -2,97 +2,107 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-const context = vm.createContext({ URL });
-vm.runInContext(readFileSync(new URL('../browser-api.js', import.meta.url), 'utf8'), context);
-const api = context.TransitAPI;
-test('browser URL encoding and leading-zero stop ID', () => {
-  const subway = api.buildURL('subway', { subwayKey: 'key/+', station: '서울' });
-  assert(subway.startsWith('https://'));
-  assert(subway.includes('key%2F%2B'));
-  assert(decodeURIComponent(subway).endsWith('/서울'));
-  const bus = new URL(api.buildURL('bus', { busKey: 'key+/=', arsId: '01001' }));
-  assert.equal(bus.searchParams.get('serviceKey'), 'key+/=');
-  assert.equal(bus.searchParams.get('arsId'), '01001');
-  assert.throws(() => api.buildURL('bus', { busKey: 'key', arsId: '1001' }));
+function setup(extra = {}) {
+  const ctx = vm.createContext({ URL, AbortController, console, ...extra });
+  for (const file of ['route-catalog.js', 'browser-api.js']) vm.runInContext(readFileSync(new URL('../' + file, import.meta.url), 'utf8'), ctx);
+  return ctx;
+}
+const api = setup().TransitAPI;
+const settings = { station: '노들/9/공항방향', arsId: '20276/동작08, 20014/360' };
+const busBody = { msgHeader: { headerCd: '0' }, msgBody: { itemList: [
+  { busRouteId: '100100057', arsId: '20014', stNm: '노들역', rtNm: '360', arrmsg1: '3분 후', arrmsg2: '10분 후' },
+  { busRouteId: '100100057', arsId: '20013', stNm: '노들역', rtNm: '360', arrmsg1: '반대편' },
+] } };
+const reply = data => ({ ok: true, json: async () => data });
+test('official static IDs; user stop preserved instead of guessing a correction', () => {
+  const ts = api.targets(settings);
+  assert.equal(ts[0].via, '노량진');
+  assert.equal(ts[0].direction, undefined);
+  assert.equal(ts[1].routeId, '119900009');
+  assert.equal(ts[1].value, '20276');
+  assert.equal(ts[2].routeId, '100100057');
+  assert.equal(api.targets({ arsId: '01001/100100057' })[0].value, '01001');
+  assert.throws(() => api.targets({ arsId: '20014' }));
+  assert.throws(() => api.targets({ arsId: '20014/없는노선' }));
+  assert.equal(api.targets({ station: '노들/9/상행,노들/9/하행,노들/9/상행' }).length, 2);
 });
-test('browser normalization, no data, auth errors', () => {
+test('requested bus service and encoding: no stationinfo dependency', () => {
+  const url = new URL(api.buildURL('bus', { routeId: '100100057', busKey: 'key+/=' }));
+  assert.equal(url.pathname, '/api/rest/arrive/getArrInfoByRouteAll');
+  assert.equal(url.searchParams.get('busRouteId'), '100100057');
+  assert.equal(url.searchParams.get('serviceKey'), 'key+/=');
+  assert.equal(url.searchParams.get('resultType'), 'json');
+  assert.equal(url.searchParams.has('arsId'), false);
+  assert(api.buildURL('subway', { station: '노들', subwayKey: 'key/+' }).endsWith(encodeURIComponent('노들')));
+});
+test('airport direction uses next station, independent of assumed up/down code', () => {
+  const rows = api.normalize('subway', { realtimeArrivalList: [
+    { statnNm: '노들', subwayId: '1009', updnLine: '하행', trainLineNm: '개화행 - 노량진방면', ordkey: '02', recptnDt: '2026-11-03 09:00:00' },
+    { statnNm: '노들', subwayId: '1009', updnLine: '상행', trainLineNm: '중앙보훈병원행 - 흑석방면', ordkey: '01' },
+    { statnNm: '노들', subwayId: '1009', trainLineNm: '염창행 - 노량진방면', ordkey: '01' },
+    { statnNm: '다른역', subwayId: '1009', trainLineNm: '개화행 - 노량진방면' },
+  ] });
+  const selected = api.filter('subway', rows, api.targets(settings)[0]);
+  assert.equal(selected.length, 2);
+  assert(selected[0].title.startsWith('염창'));
+  assert.equal(selected[1].sourceTime, '2026-11-03 09:00:00');
+  const unknown = api.normalize('subway', { realtimeArrivalList: [{ statnNm: '노들', subwayId: '1009', trainLineNm: '개화행' }] });
+  assert.throws(() => api.filter('subway', unknown, api.targets(settings)[0]), { code: 'DIRECTION_UNKNOWN' });
+});
+test('bus filters by both route ID and ARS; unresolved stop is not silently substituted', () => {
+  const rows = api.normalize('bus', busBody);
+  assert.equal(api.filter('bus', rows, api.targets(settings)[2]).length, 1);
+  assert.equal(api.filter('bus', rows, api.targets(settings)[1]).length, 0);
+  assert.equal(rows[0].detail, '다음 차량 · 10분 후');
+});
+test('provider errors are distinct from a successful empty response', () => {
+  for (const code of ['1', '2', '3', '4', '5', '6', '7']) assert.throws(() => api.normalize('bus', { msgHeader: { headerCd: code } }), { code: 'PROVIDER' });
+  assert.throws(() => api.normalize('bus', { msgHeader: { headerCd: '8' } }), { code: 'SERVICE_ENDED' });
+  assert.equal(api.normalize('bus', { msgHeader: { headerCd: '0' }, msgBody: { itemList: null } }).length, 0);
   assert.equal(api.normalize('subway', { errorMessage: { code: 'INFO-200' } }).length, 0);
-  assert.equal(api.normalize('bus', { msgHeader: { headerCd: '4' } }).length, 0);
-  assert.throws(() => api.normalize('subway', { errorMessage: { code: 'ERROR-301' } }));
-  assert.throws(() => api.normalize('bus', { msgHeader: { headerCd: '7' } }));
-  const rows = api.normalize('bus', { msgHeader: { headerCd: '0' }, msgBody: { itemList: { rtNm: '101', arrmsg1: '곧 도착', arrmsg2: '10분 후' } } });
-  assert.equal(rows[0].message, '곧 도착');
-  assert.equal(rows[0].detail, '10분 후');
+  assert.throws(() => api.normalize('subway', { errorMessage: { code: 'INFO-100', message: 'secret' } }), e => !e.message.includes('secret'));
 });
-test('multiple locations, deduplication, existing single-location settings', () => {
-  const targets = api.targets({ subwayKey: 's', station: '강남, 서울, 강남', busKey: 'b', arsId: '01001, 01002' });
-  assert.equal(targets.length, 4);
-  assert.equal(targets[0].value, '강남');
-  assert.equal(targets[1].value, '서울');
-  assert.equal(targets[2].value, '01001');
-  assert.equal(api.targets({ subwayKey: 's', station: '강남', arsId: '' }).length, 1);
-  assert.equal(api.targets({ subwayKey: '', station: '강남', arsId: '' }).length, 0);
-  assert.throws(() => api.targets({ busKey: 'b', arsId: '01001, 123' }));
-  assert.throws(() => api.targets({ subwayKey: 's', station: Array.from({ length: 11 }, (_, i) => '역' + i).join(',') }));
+test('same route shares an upstream request while applying different stop filters', async () => {
+  let calls = 0;
+  const client = api.createClient(async () => { calls++; return reply(busBody); });
+  const ts = api.targets({ arsId: '20014/360, 20013/360' });
+  const [a, b] = await Promise.all(ts.map(t => client.load(t, 'key')));
+  assert.equal(calls, 1); assert.equal(a[0].arsId, '20014'); assert.equal(b[0].arsId, '20013');
+  client.clear(); await client.load(ts[0], 'key'); assert.equal(calls, 2);
 });
-
-test('multiple cards survive one failed request; settings start collapsed', async () => {
+test('network, HTTP, and invalid JSON failures are sanitized and not cached', async () => {
+  const target = api.targets(settings)[2]; let calls = 0;
+  const client = api.createClient(async () => { calls++; throw new Error('https://secret-key/'); });
+  for (let i = 0; i < 2; i++) await assert.rejects(client.load(target, 'secret-key'), e => e.code === 'NETWORK' && !e.message.includes('secret-key'));
+  assert.equal(calls, 2);
+  await assert.rejects(api.createClient(async () => ({ ok: false, status: 503 })).load(target, 'key'), { code: 'HTTP' });
+  await assert.rejects(api.createClient(async () => ({ ok: true, json: async () => { throw new Error('xml'); } })).load(target, 'key'), { code: 'FORMAT' });
+});
+test('UI creates three independent cards, preserves keys, closes settings on save', async () => {
   function element() {
-    return { children: [], hidden: false, value: '', className: '', textContent: '', appendChild(child) { this.children.push(child); }, setAttribute() {}, focus() {} };
+    let text = '';
+    return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'testBtn', 'memo', 'settings', 'settingsBtn', 'subwayKey', 'busKey', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'subwayKey', 'busKey', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'settingsForm', 'clearBtn', 'presetBtn']) ids[id] = element();
   ids.settings.hidden = true;
-  const sandbox = vm.createContext({
-    URL, AbortController, console,
+  let stored;
+  const ctx = setup({
     document: { hidden: false, getElementById: id => ids[id], createElement: element, addEventListener() {} },
-    localStorage: { getItem: () => JSON.stringify({ subwayKey: 's', station: '강남, 서울', busKey: 'b', arsId: '01001', interval: 60 }) },
-    setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0, clearInterval() {},
-    fetch: async url => {
-      if (url.includes('script.googleusercontent')) return { json: async () => ({ memo: 'memo' }) };
-      if (decodeURIComponent(url).endsWith('/강남')) throw new Error('network');
-      if (url.includes('swopenapi')) return { ok: true, json: async () => ({ realtimeArrivalList: [{ trainLineNm: '서울행', arvlMsg2: '곧 도착' }] }) };
-      return { ok: true, json: async () => ({ msgHeader: { headerCd: '4' } }) };
-    },
+    localStorage: { getItem: () => JSON.stringify({ ...settings, subwayKey: 's', busKey: 'b', interval: 60 }), setItem(k, v) { stored = JSON.parse(v); } },
+    setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0,
+    fetch: async url => { if (url.includes('swopenapi')) throw new Error('offline'); return reply(busBody); },
   });
-  vm.runInContext(readFileSync(new URL('../browser-api.js', import.meta.url), 'utf8'), sandbox);
-  vm.runInContext(readFileSync(new URL('../script.js', import.meta.url), 'utf8'), sandbox);
+  vm.runInContext(readFileSync(new URL('../script.js', import.meta.url), 'utf8'), ctx);
   await new Promise(resolve => setImmediate(resolve));
   const cards = ids.arrivalPanels.children;
-  assert.equal(cards.length, 3);
-  assert.equal(cards[0].children[1].className, 'error');
-  assert.equal(cards[1].children[2].children.length, 1);
-  assert(cards[2].children[1].textContent.includes('도착정보 없음'));
+  assert.equal(cards.length, 3); assert.equal(cards[0].children[1].className, 'error');
+  assert.equal(cards[1].children[2].children.length, 0);
+  assert.equal(cards[2].children[2].children.length, 1);
   assert.equal(ids.settings.hidden, true);
-  assert.equal(ids.refreshBtn.disabled, false);
-});
-test('requested presets retain only line 9 airport direction and exact bus routes', () => {
-  const targets = api.targets({ subwayKey: 's', station: '노들/9/공항방향', busKey: 'b', arsId: '20276/동작08, 20014/360' });
-  assert.equal(targets.length, 3);
-  const subway = api.normalize('subway', { realtimeArrivalList: [
-    { subwayId: '1009', updnLine: '상행', trainLineNm: '개화행', arvlMsg2: '3분 후' },
-    { subwayId: '1009', updnLine: '하행', trainLineNm: '중앙보훈병원행', arvlMsg2: '1분 후' },
-    { subwayId: '1009', updnLine: '상행', trainLineNm: '염창행', arvlMsg2: '5분 후' },
-    { subwayId: '1001', updnLine: '상행', trainLineNm: '다른 호선' },
-  ] });
-  const filtered = api.filter('subway', subway, targets[0]);
-  assert.equal(filtered.length, 2);
-  assert.equal(filtered[0].title, '개화행');
-  assert.equal(filtered[1].title, '염창행');
-  const buses = api.normalize('bus', { msgHeader: { headerCd: '0' }, msgBody: { itemList: [
-    { rtNm: '동작08', arrmsg1: '곧 도착' }, { rtNm: '동작08-1', arrmsg1: '1분 후' },
-    { rtNm: '360', arrmsg1: '2분 후' }, { rtNm: 'N360', arrmsg1: '3분 후' },
-  ] } });
-  assert.equal(api.filter('bus', buses, targets[1]).length, 1);
-  assert.equal(api.filter('bus', buses, targets[2])[0].title, '360');
-  assert.equal(targets[1].value, '20276');
-  assert.equal(targets[2].value, '20014');
-  assert(api.label(targets[0]).includes('공항방향'));
-  assert.equal(api.filter('subway', subway, { line: '1009', direction: '외선' }).length, 0);
-});
-test('same station can have separate directional conditions; invalid filters rejected', () => {
-  assert.equal(api.targets({ subwayKey: 's', station: '노들/9/상행, 노들/9/하행, 노들/9/상행' }).length, 2);
-  assert.throws(() => api.targets({ subwayKey: 's', station: '강남/2/공항방향' }));
-  assert.throws(() => api.targets({ subwayKey: 's', station: '노들/90/상행' }));
-  assert.throws(() => api.targets({ busKey: 'b', arsId: '20276/동작08/추가' }));
+  ids.settingsBtn.onclick(); assert.equal(ids.settings.hidden, false);
+  ids.settingsForm.onsubmit({ preventDefault() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stored.subwayKey, 's'); assert.equal(stored.busKey, 'b'); assert.equal(stored.interval, 180);
+  assert.equal(ids.settings.hidden, true); assert.equal(ids.refreshBtn.disabled, false);
 });

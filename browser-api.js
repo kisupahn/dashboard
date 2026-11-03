@@ -1,88 +1,116 @@
 (function (root) {
   'use strict';
-  function buildURL(type, settings) {
-    if (type === 'subway') {
-      if (!settings.subwayKey || !settings.station.trim()) throw new Error('지하철 키와 역명을 설정하세요.');
-      return 'https://swopenapi.seoul.go.kr/api/subway/' + encodeURIComponent(settings.subwayKey.trim()) + '/json/realtimeStationArrival/0/100/' + encodeURIComponent(settings.station.trim());
-    }
-    if (!settings.busKey || !/^\d{5}$/.test(settings.arsId)) throw new Error('버스 키와 5자리 정류소 번호를 설정하세요.');
-    var url = new URL('https://ws.bus.go.kr/api/rest/stationinfo/getStationByUid');
-    url.searchParams.set('serviceKey', settings.busKey.trim());
-    url.searchParams.set('arsId', settings.arsId);
-    url.searchParams.set('resultType', 'json');
-    return url.href;
-  }
-  function normalize(type, data) {
-    if (type === 'subway') {
-      var code = (data.errorMessage && data.errorMessage.code) || (data.RESULT && data.RESULT.CODE) || data.code;
-      if (code === 'INFO-200') return [];
-      if (code && code !== 'INFO-000') throw new Error('지하철 API 오류 (' + String(code).replace(/[^A-Z0-9-]/gi, '').slice(0, 24) + '). 키의 활용 승인과 역명을 확인하세요.');
-      if (!Array.isArray(data.realtimeArrivalList)) throw new Error('지하철 응답 형식을 확인할 수 없습니다.');
-      return data.realtimeArrivalList.map(function (item) {
-        return { title: item.trainLineNm || item.bstatnNm || '지하철', message: item.arvlMsg2 || '정보 없음', detail: item.arvlMsg3 || '', line: String(item.subwayId || ''), direction: String(item.updnLine || '') };
-      });
-    }
-    var header = data.msgHeader || {};
-    if (String(header.headerCd) === '4') return [];
-    if (String(header.headerCd) !== '0') throw new Error('버스 API 오류. 키의 활용 승인과 Decoding 키 사용 여부를 확인하세요.');
-    if (!data.msgBody || !('itemList' in data.msgBody)) throw new Error('버스 응답 형식을 확인할 수 없습니다.');
-    var items = data.msgBody.itemList || [];
-    if (!Array.isArray(items)) items = [items];
-    return items.map(function (item) {
-      return { title: item.rtNm || '버스', message: item.arrmsg1 || '정보 없음', detail: item.arrmsg2 || '', stop: item.stNm || '' };
-    });
-  }
+  function error(message, code) { var e = new Error(message); e.code = code; return e; }
   function targets(settings) {
     var result = [];
     ['subway', 'bus'].forEach(function (type) {
-      var key = type === 'subway' ? settings.subwayKey : settings.busKey;
-      var input = String((type === 'subway' ? settings.station : settings.arsId) || '');
-      var values = input.split(/[,，\n]+/).map(function (v) { return v.trim(); }).filter(Boolean);
+      var text = type === 'subway' ? settings.station : settings.arsId;
       var seen = [];
-      values.forEach(function (entry) {
-        var parts = entry.split('/').map(function (v) { return v.trim(); });
-        var target = { type: type, value: parts[0] };
-        if (!target.value) throw new Error('역명 또는 정류소 번호를 입력하세요.');
+      String(text || '').split(/[,，\n]/).map(function (s) { return s.trim(); }).filter(Boolean).forEach(function (text) {
+        var p = text.split('/').map(function (s) { return s.trim(); });
+        var t = { type: type, value: p[0] };
         if (type === 'bus') {
-          if (!/^\d{5}$/.test(target.value) || parts.length > 2) throw new Error('버스는 20276/동작08처럼 입력하세요.');
-          if (parts[1]) target.route = parts[1];
+          if (!/^\d{5}$/.test(p[0]) || !p[1] || p.length > 2) throw error('버스는 정류소/노선으로 입력하세요. 예: 20014/360');
+          t.route = p[1];
+          t.routeId = /^\d{9}$/.test(p[1]) ? p[1] : root.SeoulRoutes[p[1]];
+          if (!t.routeId) throw error('노선 ID를 찾지 못했습니다. 노선명을 확인하거나 9자리 노선 ID를 입력하세요.');
         } else {
-          if (target.value.length > 50 || parts.length > 3) throw new Error('지하철은 노들/9/공항방향처럼 입력하세요.');
-          if (parts[1]) {
-            var line = parts[1].replace(/호선$/, '');
-            if (!/^[1-9]$/.test(line)) throw new Error('호선은 1~9 또는 비워두세요.');
-            target.line = String(1000 + Number(line));
+          if (!p[0] || p[0].length > 50 || p.length > 3) throw error('지하철은 역명/호선/방향으로 입력하세요.');
+          if (p[1]) {
+            var line = p[1].replace(/호선$/, '');
+            if (!/^[1-9]$/.test(line)) throw error('호선은 1~9로 입력하세요.');
+            t.line = String(1000 + Number(line));
           }
-          if (parts[2]) {
-            var direction = parts[2];
-            if (direction === '공항방향') {
-              if (target.line !== '1009' || target.value !== '노들') throw new Error('공항방향은 노들/9에서 사용하세요. 다른 역은 상행·하행을 입력하세요.');
-              target.direction = '상행';
-              target.directionLabel = '공항방향';
-            } else {
-              if (['상행', '하행', '내선', '외선'].indexOf(direction) < 0) throw new Error('방향은 상행·하행·내선·외선 중 선택하세요. 노들/9는 공항방향도 지원합니다.');
-              target.direction = direction;
-            }
+          if (p[2] === '공항방향' && p[0] === '노들' && t.line === '1009') {
+            t.via = '노량진'; t.directionLabel = '김포공항 방면';
+          } else if (p[2]) {
+            if (['상행', '하행', '내선', '외선'].indexOf(p[2]) < 0) throw error('노들/9/공항방향 또는 API 방향(상행·하행·내선·외선)을 입력하세요.');
+            t.direction = p[2];
           }
         }
-        var identity = JSON.stringify(target);
-        if (seen.indexOf(identity) >= 0) return;
-        seen.push(identity);
-        if (seen.length > 10) throw new Error('서비스별로 최대 10곳까지 설정할 수 있습니다.');
-        if (key) result.push(target);
+        var id = JSON.stringify(t);
+        if (seen.indexOf(id) >= 0) return;
+        seen.push(id);
+        if (seen.length > 10) throw error('서비스별 최대 10개 조건을 지원합니다.');
+        result.push(t);
       });
     });
     return result;
   }
+  function label(t) {
+    return (t.type === 'subway' ? '지하철 · ' : '버스 · ') + t.value + (t.route ? ' · ' + t.route : '') + (t.line ? ' · ' + (Number(t.line) - 1000) + '호선' : '') + (t.directionLabel || t.direction ? ' · ' + (t.directionLabel || t.direction) : '');
+  }
+  function buildURL(type, settings) {
+    if (type === 'subway') {
+      if (!settings.subwayKey || !settings.station) throw error('지하철 인증키를 입력하세요.');
+      return 'https://swopenapi.seoul.go.kr/api/subway/' + encodeURIComponent(settings.subwayKey.trim()) + '/json/realtimeStationArrival/0/100/' + encodeURIComponent(settings.station);
+    }
+    if (!settings.busKey || !/^\d{9}$/.test(settings.routeId)) throw error('버스 인증키와 내부 노선 ID가 필요합니다.');
+    var url = new URL('https://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteAll');
+    url.searchParams.set('serviceKey', settings.busKey.trim());
+    url.searchParams.set('busRouteId', settings.routeId);
+    url.searchParams.set('resultType', 'json');
+    return url.href;
+  }
+  function normalize(type, data) {
+    if (!data || typeof data !== 'object') throw error('API 응답 형식이 올바르지 않습니다.');
+    if (type === 'subway') {
+      var code = (data.errorMessage || {}).code || (data.RESULT || {}).CODE || data.code;
+      if (code === 'INFO-200') return [];
+      if (code && code !== 'INFO-000') throw error('지하철 API 오류. 키의 유효성·호출 한도·역명을 확인하세요.', 'PROVIDER');
+      if (!Array.isArray(data.realtimeArrivalList)) throw error('지하철 응답 형식이 올바르지 않습니다.');
+      return data.realtimeArrivalList.map(function (v) {
+        var lineName = String(v.trainLineNm || '');
+        var match = lineName.match(/-\s*(.*?)\s*방면\s*$/);
+        return { title: lineName || String(v.bstatnNm || '지하철'), message: String(v.arvlMsg2 || '안내 없음'), detail: String(v.arvlMsg3 || ''), line: String(v.subwayId || ''), station: String(v.statnNm || ''), direction: String(v.updnLine || ''), via: match ? match[1].trim() : '', sourceTime: String(v.recptnDt || ''), order: String(v.ordkey || '') };
+      });
+    }
+    var code = String((data.msgHeader || {}).headerCd);
+    var messages = { '1': '제공기관 시스템 오류', '2': '요청 변수 오류', '3': '정류소를 찾을 수 없음', '4': '노선을 찾을 수 없음', '5': '위치 요청 오류', '6': '실시간정보 읽기 실패', '7': '경로 검색 결과 없음', '8': '운행 종료' };
+    if (code !== '0') throw error('버스: ' + (messages[code] || '인증·활용 승인 또는 제공기관 응답 오류'), code === '8' ? 'SERVICE_ENDED' : 'PROVIDER');
+    if (!data.msgBody || !Object.prototype.hasOwnProperty.call(data.msgBody, 'itemList')) throw error('버스 응답 형식이 올바르지 않습니다.');
+    var rows = data.msgBody.itemList || [];
+    if (!Array.isArray(rows)) rows = [rows];
+    return rows.map(function (v) { return { title: String(v.busRouteAbrv || v.rtNm || '버스'), message: String(v.arrmsg1 || '안내 없음'), detail: '다음 차량 · ' + String(v.arrmsg2 || '안내 없음'), stop: String(v.stNm || ''), arsId: String(v.arsId || '').padStart(5, '0'), routeId: String(v.busRouteId || ''), sourceTime: String(v.mkTm || '') }; });
+  }
   function filter(type, items, target) {
-    return items.filter(function (item) {
-      if (type === 'subway') return (!target.line || item.line === target.line) && (!target.direction || item.direction === target.direction);
-      return !target.route || String(item.title).replace(/\s/g, '') === target.route.replace(/\s/g, '');
-    });
+    if (type === 'subway') {
+      var candidates = items.filter(function (v) { return v.station === target.value && (!target.line || v.line === target.line); });
+      if (target.via && candidates.length && candidates.some(function (v) { return !v.via; })) throw error('방면 정보 확인 불가. 실제 trainLineNm 응답 확인이 필요합니다.', 'DIRECTION_UNKNOWN');
+      return candidates.filter(function (v) { return (!target.via || v.via === target.via) && (!target.direction || v.direction === target.direction); }).sort(function (a, b) { return a.order.localeCompare(b.order); });
+    }
+    return items.filter(function (v) { return v.arsId === target.value && v.routeId === target.routeId; });
   }
-  function label(target) {
-    if (target.type === 'bus') return '버스 · ' + target.value + (target.route ? ' · ' + target.route : '');
-    return '지하철 · ' + target.value + (target.line ? ' · ' + (Number(target.line) - 1000) + '호선' : '') + (target.direction ? ' · ' + (target.directionLabel || target.direction) : '');
+  function createClient(fetchImpl) {
+    fetchImpl = fetchImpl || root.fetch.bind(root);
+    var cache = new Map();
+    return {
+      async load(target, key, signal) {
+        var type = target.type;
+        var url = buildURL(type, { station: target.value, routeId: target.routeId, subwayKey: key, busKey: key });
+        var hit = cache.get(url);
+        if (hit && Date.now() - hit.time < 15000) return filter(type, hit.rows, target);
+        if (hit && hit.pending) return filter(type, await hit.pending, target);
+        var task = (async function () {
+          var res;
+          try { res = await fetchImpl(url, { signal: signal, credentials: 'omit', referrerPolicy: 'no-referrer' }); }
+          catch (_) { throw error('연결 실패: HTTPS·CORS·네트워크 또는 응답 지연을 확인하세요.', 'NETWORK'); }
+          if (!res.ok) throw error('제공기관 HTTP 오류 (' + res.status + ')', 'HTTP');
+          var data;
+          try { data = await res.json(); } catch (_) { throw error('JSON 응답이 아닙니다. 키 승인과 제공기관 상태를 확인하세요.', 'FORMAT'); }
+          return normalize(type, data);
+        })();
+        var entry = { pending: task };
+        cache.set(url, entry);
+        try {
+          var rows = await task;
+          if (cache.size > 100) cache.delete(cache.keys().next().value);
+          if (cache.get(url) === entry) cache.set(url, { rows: rows, time: Date.now() });
+          return filter(type, rows, target);
+        } catch (e) { if (cache.get(url) === entry) cache.delete(url); throw e; }
+      },
+      clear: function () { cache.clear(); }
+    };
   }
-  root.TransitAPI = { buildURL: buildURL, normalize: normalize, targets: targets, filter: filter, label: label };
+  root.TransitAPI = { targets: targets, label: label, buildURL: buildURL, normalize: normalize, filter: filter, createClient: createClient };
 })(typeof window !== 'undefined' ? window : globalThis);
