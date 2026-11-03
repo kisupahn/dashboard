@@ -3,9 +3,10 @@ updateClock(); setInterval(updateClock, 1000);
 
 (function () {
   'use strict';
+  var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
   var fields = ['relayUrl', 'relayToken', 'station', 'arsId', 'interval'];
-  var settings = { relayUrl: '', relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 180 };
+  var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 180 };
   var timer, generation = 0, controllers = [];
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
@@ -13,12 +14,13 @@ updateClock(); setInterval(updateClock, 1000);
     var saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && typeof saved === 'object') fields.forEach(function (key) { if (typeof saved[key] === 'string' || typeof saved[key] === 'number') settings[key] = saved[key]; });
   } catch (_) { $('saveStatus').textContent = '저장 정보를 읽지 못했습니다. 다시 입력하세요.'; }
+  if (!settings.relayUrl) settings.relayUrl = defaultRelayUrl;
   settings.interval = Math.min(3600, Math.max(30, Number(settings.interval) || 180));
   fields.forEach(function (key) { $(key).value = settings[key]; });
   function toggle(open) {
     $('settings').hidden = !open;
     $('settingsBtn').setAttribute('aria-expanded', String(open));
-    if (open) $('relayUrl').focus();
+    if (open) $('relayToken').focus();
     else $('settingsBtn').focus();
   }
   $('settingsBtn').onclick = function () { toggle($('settings').hidden); };
@@ -128,7 +130,7 @@ updateClock(); setInterval(updateClock, 1000);
     $('saveStatus').textContent = '조회조건을 채웠습니다. 저장하고 닫기를 누르세요. 중계 설정은 유지됩니다.';
   };
   $('clearBtn').onclick = function () {
-    settings = { relayUrl: '', relayToken: '', station: '',  arsId: '', interval: 180 };
+    settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '',  arsId: '', interval: 180 };
     fields.forEach(function (key) { $(key).value = settings[key]; });
     try { localStorage.removeItem(storageKey); $('saveStatus').textContent = '저장 정보를 삭제했습니다.'; }
     catch (_) { $('saveStatus').textContent = '브라우저 설정에서 사이트 데이터를 삭제하세요.'; }
