@@ -48,7 +48,10 @@
       // 이 API는 첫째·둘째 차량까지만 제공합니다. 세 번째는 추정해 채우지 않습니다.
       if (items[0]) [items[0].message, items[0].secondMessage].forEach(function (message) {
         var available = message && !/안내 없음|정보.*없|운행.*종료|출발.*대기|회차.*대기/.test(message);
-        slots.push(available ? { message: message, label: '' } : null);
+        var position = available && message.match(/(\d+)\s*(번째|정거장|정류장)\s*전/);
+        var label = position ? position[1] + position[2] + ' 전' : '';
+        var primary = position ? message.replace(position[0], '').replace(/\s*[\[(]\s*[\])]\s*/g, '').trim() : message;
+        slots.push(available ? { message: primary, label: label } : null);
       });
     } else slots = items.slice(0, 3).map(function (item) { return { item: item, label: item.title.split(/\s*-\s*/)[0], message: item.message }; });
     return [slots[0] || null, slots[1] || null, slots[2] || null];

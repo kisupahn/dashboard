@@ -195,3 +195,14 @@ test('subway keeps three arrivals and pads an incomplete list without inventing 
   const sparse = api.arrivalSlots('subway', rows.slice(0, 1));
   assert.equal(sparse[1], null); assert.equal(sparse[2], null);
 });
+test('bus stop distances are separated from arrival times for both upcoming vehicles', () => {
+  const [first, second, third] = api.arrivalSlots('bus', [{ message: '3분20초후[2번째 전]', secondMessage: '8분후 (5번째전)' }]);
+  assert.equal(first.message, '3분20초후');
+  assert.equal(first.label, '2번째 전');
+  assert.equal(second.message, '8분후');
+  assert.equal(second.label, '5번째 전');
+  assert.equal(third, null);
+  const [soon] = api.arrivalSlots('bus', [{ message: '곧 도착[1번째전]', secondMessage: '' }]);
+  assert.equal(soon.message, '곧 도착'); assert.equal(soon.label, '1번째 전');
+  assert.equal(api.arrivalSlots('bus', [{ message: '4분 후' }])[0].label, '');
+});
