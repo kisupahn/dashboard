@@ -80,15 +80,15 @@
     body[data-screen="menu"] .screen-switch button { font-family: "Noto Serif KR", Georgia, serif; border-color: #d7c9af; background: transparent; color: #776242; }
     body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
-    .menu-paper { position: absolute; top: 0; left: 0; width: 860px; margin: 0; padding: 28px 42px; transform-origin: 0 0; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
-    .menu-heading { margin-bottom: 18px; }
+    .menu-paper { position: absolute; top: 0; left: 0; width: 860px; margin: 0; padding: 36px 42px; transform-origin: 0 0; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .menu-heading { margin-bottom: 24px; }
     .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; }
     .menu-heading p { margin: 6px 0 0; font-size: 24px; letter-spacing: .18em; }
     .menu-heading::after { content: ""; display: block; width: 56px; height: 1px; margin: 12px auto 0; background: #a58b5c; }
-    .menu-course { margin-top: 18px; }
+    .menu-course { margin-top: 28px; }
     .menu-course h2 { margin: 0 0 6px; color: #392a1b; font: 600 20px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .12em; }
-    .menu-dish { margin: 9px 0 0; font-size: 30px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
-    .menu-translation { display: block; margin-top: 2px; color: #281b13; font: italic 600 28px/1.18 "Cormorant Garamond", Georgia, serif; letter-spacing: 0; }
+    .menu-dish { margin: 16px 0 0; font-size: 30px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
+    .menu-translation { display: block; margin-top: 4px; color: #281b13; font: italic 600 28px/1.25 "Cormorant Garamond", Georgia, serif; letter-spacing: 0; }
     .menu-detail { display: block; margin: 3px 0; font-size: .72em; font-weight: 600; color: #39291f; line-height: 1.3; }
     body[data-screen="trot"] { max-width: none; height: 100vh; padding: 12px; overflow: hidden; background: repeating-linear-gradient(125deg, #ff1588 0 72px, #ff9f00 72px 144px, #fff100 144px 216px, #28e65d 216px 288px, #23d9ff 288px 360px, #6652ff 360px 432px, #d448ff 432px 504px); }
     body[data-screen="trot"] .screen-switch { background: #fff400; padding: 5px; border: 3px dashed #fc1687; box-shadow: 4px 4px #27114b; }
@@ -160,7 +160,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.6</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.7</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -184,27 +184,27 @@
   </div>
   <main id="menuScreen" hidden aria-label="오늘의 메뉴">
     <div id="menuStage" class="menu-stage"><div id="menuBoard" class="menu-paper">
-      <div class="menu-heading"><h1 lang="fr">Menu</h1><p>오늘의 메뉴</p></div>
-      <section class="menu-course" aria-label="밥"><h2 lang="fr">RIZ</h2>
-        <p class="menu-dish">늙은호박콩밥<span class="menu-translation" lang="fr">Riz au potiron et aux haricots</span></p>
+      <div class="menu-heading"><h1 lang="it">Menù</h1><p>오늘의 메뉴</p></div>
+      <section class="menu-course" aria-label="밥"><h2 lang="it">RISO</h2>
+        <p class="menu-dish">늙은호박콩밥<span class="menu-translation" lang="it">Riso con zucca e fagioli</span></p>
       </section>
-      <section class="menu-course" aria-label="주요리"><h2 lang="fr">PLATS PRINCIPAUX</h2>
-        <p class="menu-dish">삼겹살 김치찜<span class="menu-translation" lang="fr">Poitrine de porc mijotée au kimchi</span></p>
-        <p class="menu-dish">버섯부추차돌박이<span class="menu-translation" lang="fr">Fines tranches de poitrine de bœuf aux champignons et à la ciboulette chinoise</span></p>
+      <section class="menu-course" aria-label="주요리"><h2 lang="it">PIATTI PRINCIPALI</h2>
+        <p class="menu-dish">삼겹살 김치찜<span class="menu-translation" lang="it">Pancetta brasata al kimchi</span></p>
+        <p class="menu-dish">버섯부추차돌박이<span class="menu-translation" lang="it">Manzo con funghi ed erba cipollina</span></p>
       </section>
-      <section class="menu-course" aria-label="모둠전"><h2 lang="fr">TRIO DE JEON</h2>
-        <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="fr">Galettes de shiitakés et de courgette coréenne<br>Galettes de surimi en forme de cœur</span></p>
+      <section class="menu-course" aria-label="모둠전"><h2 lang="it">TRIS DI JEON</h2>
+        <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="it">Shiitake, zucchine e surimi</span></p>
       </section>
-      <section class="menu-course" aria-label="국과 곁들임"><h2 lang="fr">SOUPES ET ACCOMPAGNEMENTS</h2>
-        <p class="menu-dish">소고기뭇국<span class="menu-translation" lang="fr">Soupe de bœuf au radis</span></p>
-        <p class="menu-dish">동치미<span class="menu-translation" lang="fr">Dongchimi · Kimchi de radis en saumure, servi froid</span></p>
+      <section class="menu-course" aria-label="국과 곁들임"><h2 lang="it">ZUPPA E CONTORNO</h2>
+        <p class="menu-dish">소고기뭇국<span class="menu-translation" lang="it">Zuppa di manzo e ravanello</span></p>
+        <p class="menu-dish">동치미<span class="menu-translation" lang="it">Dongchimi di ravanello</span></p>
       </section>
-      <section class="menu-course" aria-label="후식"><h2 lang="fr">DESSERTS</h2>
-        <p class="menu-dish">호박고구마케이크<span class="menu-translation" lang="fr">Gâteau à la patate douce</span></p>
-        <p class="menu-dish">말차판나코타<span class="menu-translation" lang="fr">Panna cotta au matcha</span></p>
+      <section class="menu-course" aria-label="후식"><h2 lang="it">DOLCI</h2>
+        <p class="menu-dish">호박고구마케이크<span class="menu-translation" lang="it">Torta di patate dolci</span></p>
+        <p class="menu-dish">말차판나코타<span class="menu-translation" lang="it">Panna cotta al matcha</span></p>
       </section>
-      <section class="menu-course" aria-label="음료"><h2 lang="fr">BOISSON</h2>
-        <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="fr">Infusion de melon amer</span></p>
+      <section class="menu-course" aria-label="음료"><h2 lang="it">BEVANDA</h2>
+        <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="it">Infuso di melone amaro</span></p>
       </section>
     </div></div>
   </main>
@@ -231,9 +231,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.6"></script>
-  <script src="route-catalog.js?v=20261104.6"></script>
-  <script src="browser-api.js?v=20261104.6"></script>
-  <script src="script.js?v=20261104.6"></script>
+  <script src="news-player.js?v=20261104.7"></script>
+  <script src="route-catalog.js?v=20261104.7"></script>
+  <script src="browser-api.js?v=20261104.7"></script>
+  <script src="script.js?v=20261104.7"></script>
 </body>
 </html>
