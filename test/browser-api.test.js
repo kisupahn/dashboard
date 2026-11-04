@@ -466,9 +466,9 @@ test('page curl keeps the current snapshot above the next page and cleans up on 
   ctx.TransitPageCurl.start(options);
   const snapshot = board.children[0].children[0], initialClip = snapshot.style.clipPath;
   assert.equal(advances, 1); assert.equal(completes, 0);
-  tick(0); tick(550);
+  tick(0); tick(1100);
   assert.notEqual(snapshot.style.clipPath, initialClip); assert.equal(board.children.length, 1);
-  tick(1100); assert.equal(completes, 1); assert.equal(board.children.length, 0);
+  tick(2200); assert.equal(completes, 1); assert.equal(board.children.length, 0);
   const handle = ctx.TransitPageCurl.start(options);
   handle.cancel(); assert.equal(board.children.length, 0); assert.equal(frames.size, 0); assert.equal(completes, 1);
 });

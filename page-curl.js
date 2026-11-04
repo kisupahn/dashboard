@@ -91,8 +91,8 @@
     function tick(time) {
       if (stopped) return;
       if (started == null) started = time;
-      var t = Math.min(1, (time - started) / 1100);
-      var ease = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      var t = Math.min(1, (time - started) / 2200);
+      var ease = t * t * t * (t * (t * 6 - 15) + 10);
       try { draw(ease); } catch (_) { finish(); return; }
       if (t >= 1) finish(); else frame = root.requestAnimationFrame(tick);
     }
