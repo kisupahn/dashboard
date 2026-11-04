@@ -81,16 +81,12 @@
     body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
     .menu-board { position: absolute; top: 0; left: 0; width: 860px; transform-origin: 0 0; }
-    .menu-paper { position: relative; width: 100%; background-color: #f5eedf; background-image: radial-gradient(ellipse at 26% 12%, #fffdf580, transparent 65%), url("paper-grain.svg?v=20261104.14"), linear-gradient(90deg, #b39a6a0c, transparent 8%, transparent 92%, #b39a6a0f); background-size: 100% 100%, 240px 240px, 100% 100%; box-shadow: inset 0 0 36px #95774112, inset 1px 1px 0 #fffdf5, 0 5px 18px #47351c12; backface-visibility: hidden; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1220px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
-    .page-curl-layer { position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-    .page-curl-current { position: absolute; inset: 0; margin: 0; will-change: clip-path; }
-    .page-curl-layer > svg { position: absolute; inset: 0; overflow: visible; }
-    .page-curl-shadow { filter: blur(12px); }
+    .menu-paper { position: relative; width: 100%; background-color: #f5eedf; background-image: radial-gradient(ellipse at 26% 12%, #fffdf580, transparent 65%), url("paper-grain.svg?v=20261104.15"), linear-gradient(90deg, #b39a6a0c, transparent 8%, transparent 92%, #b39a6a0f); background-size: 100% 100%, 240px 240px, 100% 100%; box-shadow: inset 0 0 36px #95774112, inset 1px 1px 0 #fffdf5, 0 5px 18px #47351c12; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1420px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
     .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
     .menu-heading { margin-bottom: 24px; }
-    .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
-    .menu-heading p { margin: 6px 0 0; font-size: 24px; letter-spacing: .18em; }
-    .menu-heading .menu-date { display: block; margin-top: 14px; color: #483321; font: 600 25px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .16em; font-variant-numeric: tabular-nums; }
+    .menu-heading h1 { margin: 0; font: italic 600 clamp(82px, 11vw, 116px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
+    .menu-heading p { margin: 6px 0 0; font-size: 32px; letter-spacing: .18em; }
+    .menu-heading .menu-date { display: block; margin-top: 14px; color: #483321; font: 600 32px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .16em; font-variant-numeric: tabular-nums; }
     .menu-settings-toggle { position: fixed; right: 16px; bottom: 14px; z-index: 10; width: 44px; height: 44px; padding: 7px; border: 0; color: #79603e; background: transparent; opacity: .65; transition: opacity .2s, transform .2s; }
     .menu-settings-toggle svg { display: block; width: 100%; height: 100%; }
     .menu-settings-toggle:hover, .menu-settings-toggle:focus-visible, .menu-settings-toggle[aria-expanded="true"] { opacity: 1; transform: rotate(-5deg); }
@@ -99,9 +95,9 @@
     .menu-settings form { grid-template-columns: minmax(0, 1fr); } .menu-settings small { color: #715c43; }
     .menu-heading::after { content: ""; display: block; width: 56px; height: 1px; margin: 12px auto 0; background: #a58b5c; }
     .menu-course { margin-top: 28px; }
-    .menu-course h2 { margin: 0 0 6px; color: #392a1b; font: 600 20px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .12em; }
-    .menu-dish { margin: 16px 0 0; font-size: 30px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
-    .menu-translation { display: block; margin-top: 4px; color: #281b13; font: italic 600 28px/1.25 "Cormorant Garamond", Georgia, serif; letter-spacing: 0; }
+    .menu-course h2 { margin: 0 0 6px; color: #392a1b; font: 600 28px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .12em; }
+    .menu-dish { margin: 16px 0 0; font-size: 44px; font-weight: 600; line-height: 1.25; word-break: keep-all; }
+    .menu-translation { display: block; margin-top: 4px; color: #281b13; font: italic 600 36px/1.25 "Cormorant Garamond", Georgia, serif; letter-spacing: 0; }
     .menu-detail { display: block; margin: 3px 0; font-size: .72em; font-weight: 600; color: #39291f; line-height: 1.3; }
     body[data-screen="trot"] { max-width: none; height: 100vh; padding: 12px; overflow: hidden; background: repeating-linear-gradient(125deg, #ff1588 0 72px, #ff9f00 72px 144px, #fff100 144px 216px, #28e65d 216px 288px, #23d9ff 288px 360px, #6652ff 360px 432px, #d448ff 432px 504px); }
     body[data-screen="trot"] .screen-switch { background: #fff400; padding: 5px; border: 3px dashed #fc1687; box-shadow: 4px 4px #27114b; }
@@ -173,7 +169,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.14</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.15</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -234,7 +230,7 @@
     <form id="menuSettingsForm">
       <label>제목<input id="menuTitleInput" type="text" maxlength="120" required></label>
       <label>한글 부제<input id="menuSubtitleInput" type="text" maxlength="120"></label>
-      <label>날짜 · 시간<input id="menuDateInput" type="datetime-local" step="60"><small>비워두면 현재 시각을 표시합니다.</small></label>
+      <label>날짜 · 시간<input id="menuDateInput" type="text" inputmode="numeric" pattern="[0-9]{12}" minlength="12" maxlength="12" autocomplete="off" placeholder="202611071805"><small>숫자 12자리(yyyymmddhhmm). 비우면 현재 시각을 표시합니다.</small></label>
       <p id="menuSettingsStatus" role="status"></p>
       <div><button type="submit">저장</button> <button id="closeMenuSettingsBtn" type="button">닫기</button></div>
     </form>
@@ -262,10 +258,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.14"></script>
-  <script src="route-catalog.js?v=20261104.14"></script>
-  <script src="browser-api.js?v=20261104.14"></script>
-  <script src="page-curl.js?v=20261104.14"></script>
-  <script src="script.js?v=20261104.14"></script>
+  <script src="news-player.js?v=20261104.15"></script>
+  <script src="route-catalog.js?v=20261104.15"></script>
+  <script src="browser-api.js?v=20261104.15"></script>
+  <script src="script.js?v=20261104.15"></script>
 </body>
 </html>

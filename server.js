@@ -1,7 +1,7 @@
 // 로컬 개발 미리보기 전용. 실제 화면은 정적 호스팅에서 서버 없이 실행합니다.
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
-const files = { '/': 'index.html', '/index.html': 'index.html', '/script.js': 'script.js', '/news-player.js': 'news-player.js', '/page-curl.js': 'page-curl.js', '/paper-grain.svg': 'paper-grain.svg', '/browser-api.js': 'browser-api.js', '/route-catalog.js': 'route-catalog.js' };
+const files = { '/': 'index.html', '/index.html': 'index.html', '/script.js': 'script.js', '/news-player.js': 'news-player.js', '/paper-grain.svg': 'paper-grain.svg', '/browser-api.js': 'browser-api.js', '/route-catalog.js': 'route-catalog.js' };
 const port = Number(process.env.PORT || 3000);
 http.createServer(async (req, res) => {
   const name = files[new URL(req.url, 'http://localhost').pathname];

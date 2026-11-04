@@ -5,7 +5,7 @@ import vm from 'node:vm';
 function setup(extra = {}) {
   const ctx = vm.createContext({ URL, AbortController, console, ...extra });
   if (extra.window) { Object.assign(ctx, extra.window); ctx.window = ctx; }
-  for (const file of ['route-catalog.js', 'browser-api.js', 'news-player.js', 'page-curl.js']) vm.runInContext(readFileSync(new URL('../' + file, import.meta.url), 'utf8'), ctx);
+  for (const file of ['route-catalog.js', 'browser-api.js', 'news-player.js']) vm.runInContext(readFileSync(new URL('../' + file, import.meta.url), 'utf8'), ctx);
   return ctx;
 }
 const api = setup().TransitAPI;
@@ -151,11 +151,17 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.match(ids.menuDate.textContent, /^\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}$/);
   ids.menuSettingsBtn.onclick(); assert.equal(ids.menuSettings.hidden, false);
   events.click({ target: { closest: () => null } }); assert.equal(ids.menuBack.hidden, true);
-  ids.menuTitleInput.value = 'La Tavola'; ids.menuSubtitleInput.value = '함께하는 식탁'; ids.menuDateInput.value = '2026-11-07T18:05';
+  ids.menuTitleInput.value = 'La Tavola'; ids.menuSubtitleInput.value = '함께하는 식탁'; ids.menuDateInput.value = '202611071805';
   ids.menuSettingsForm.onsubmit({ preventDefault() {} });
   assert.equal(stored.title, 'La Tavola'); assert.equal(ids.menuTitle.textContent, 'La Tavola');
   assert.equal(ids.menuDate.textContent, '2026.11.07 18:05'); assert.equal(ids.menuSettings.hidden, true);
-  ids.menuSettingsBtn.onclick(); ids.menuTitleInput.value = 'discard'; ids.closeMenuSettingsBtn.onclick();
+  ids.menuSettingsBtn.onclick();
+  assert.equal(ids.menuDateInput.value, '202611071805');
+  for (const invalid of ['202602301805', '202613011805', '202611072460', '20261107180', 'abcdefghijkl']) {
+    ids.menuDateInput.value = invalid; ids.menuSettingsForm.onsubmit({ preventDefault() {} });
+    assert.equal(ids.menuSettings.hidden, false); assert.equal(ids.menuDate.textContent, '2026.11.07 18:05');
+  }
+  ids.menuTitleInput.value = 'discard'; ids.closeMenuSettingsBtn.onclick();
   assert.equal(ids.menuTitle.textContent, 'La Tavola');
   stored = undefined;
   assert.equal(ids.menuFront.hidden, false); assert.equal(ids.menuBack.hidden, true);
@@ -171,27 +177,15 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   ctx.window.innerWidth = 390; ctx.window.innerHeight = 844; ids.menuStage.clientWidth = 358; events['window-resize']();
   assert(parseFloat(ids.menuStage.style.height) + 90 <= 844 - 20);
   const menuScale = Number(ids.menuBoard.style.transform.match(/scale\(([^)]+)\)/)[1]); assert(menuScale * 860 <= 358);
-  const curls = [];
-  ctx.TransitPageCurl.start = options => { options.advance(); const handle = { cancel() { this.cancelled = true; }, complete: options.complete }; curls.push(handle); return handle; };
-  events.click({ target: { closest: () => null } });
-  assert.equal(curls.length, 1); assert.equal(ids.menuBack.hidden, false);
-  events.click({ target: { closest: () => null } }); assert.equal(curls.length, 1);
-  curls[0].complete();
-  events.click({ target: { closest: () => null } });
-  assert.equal(curls.length, 2); assert.equal(ids.menuFront.hidden, false); // Last page loops to first.
-  curls[1].complete();
-  ctx.window.matchMedia = () => ({ matches: true });
-  events.click({ target: { closest: () => null } });
-  assert.equal(ids.menuBack.hidden, false); assert.equal(curls.length, 2);
-  ctx.window.matchMedia = undefined;
-  events.click({ target: { closest: () => null } }); assert.equal(curls.length, 3);
+  events.click({ target: { closest: () => null } }); assert.equal(ids.menuBack.hidden, false);
+  events.click({ target: { closest: () => null } }); assert.equal(ids.menuFront.hidden, false);
   ctx.window.innerWidth = 1080; ctx.window.innerHeight = 1920; assert.equal(ids.transitHeader.hidden, true); assert.equal(ids.transitScreen.hidden, true);
   assert.equal(ids.newsPlayer.children.length, 0);
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   events.visibilitychange();
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   ids.trotScreenBtn.onclick();
-  assert.equal(curls[2].cancelled, true); curls[2].complete(); assert.equal(ids.menuScreen.hidden, true);
+  assert.equal(ids.menuScreen.hidden, true);
   assert.equal(ids.trotScreen.hidden, false);
   assert(parseFloat(ids.trotStage.style.height) + 90 <= 1920 - 24);
   const portraitScale = Number(ids.trotBoard.style.transform.match(/scale\(([^)]+)\)/)[1]);
@@ -427,48 +421,4 @@ test('news accepts shared video and live URLs and rejects non-YouTube or malform
     'https://youtube.com/watch?v=short', 'https://user:pass@youtube.com/watch?v=abcdefghijk']) {
     assert.throws(() => news.source(url));
   }
-});
-
-
-test('corner curl reveals the next sheet progressively from bottom right toward top left', () => {
-  const geometry = setup().TransitPageCurl.geometry;
-  function area(points) { return Math.abs(points.reduce((sum, p, i) => { const q = points[(i + 1) % points.length]; return sum + p.x * q.y - p.y * q.x; }, 0)) / 2; }
-  const width = 860, height = 1220;
-  let previous = width * height;
-  for (const t of [0, .05, .15, .3, .5, .7, .9, 1]) {
-    const g = geometry(width, height, t), remaining = area(g.flat);
-    assert(remaining <= previous + .001); previous = remaining;
-    for (const p of [...g.flat, ...g.folded]) assert(Number.isFinite(p.x) && Number.isFinite(p.y));
-    for (const p of g.flat) assert(p.x >= -.001 && p.y >= -.001 && p.x <= width + .001 && p.y <= height + .001);
-  }
-  assert.equal(area(geometry(width, height, 1).flat), 0);
-  const beginning = geometry(width, height, .01), middle = geometry(width, height, .5);
-  assert(area(beginning.flat) > width * height * .99);
-  assert(area(middle.flat) > 0 && area(middle.flat) < width * height * .8);
-  assert(middle.corner.x < beginning.corner.x && middle.corner.y < beginning.corner.y);
-  assert(beginning.crease.length >= 2);
-});
-
-test('page curl keeps the current snapshot above the next page and cleans up on completion or cancellation', () => {
-  function node() {
-    return { style: {}, attrs: {}, children: [], classList: { add() {} },
-      setAttribute(k, v) { this.attrs[k] = String(v); }, removeAttribute(k) { delete this.attrs[k]; }, querySelectorAll() { return []; },
-      appendChild(child) { this.children.push(child); child.parent = this; }, remove() { if (this.parent) this.parent.children = this.parent.children.filter(c => c !== this); },
-    };
-  }
-  let frameId = 0, advances = 0, completes = 0;
-  const frames = new Map();
-  const ctx = setup({ document: { createElement: node, createElementNS: node },
-    requestAnimationFrame(fn) { frames.set(++frameId, fn); return frameId; }, cancelAnimationFrame(id) { frames.delete(id); } });
-  const board = node(), sheet = { offsetWidth: 860, offsetHeight: 1220, cloneNode: node };
-  const options = { sheet, board, advance() { advances++; assert.equal(board.children.length, 1); }, complete() { completes++; } };
-  function tick(time) { const [id, fn] = frames.entries().next().value; frames.delete(id); fn(time); }
-  ctx.TransitPageCurl.start(options);
-  const snapshot = board.children[0].children[0], initialClip = snapshot.style.clipPath;
-  assert.equal(advances, 1); assert.equal(completes, 0);
-  tick(0); tick(1100);
-  assert.notEqual(snapshot.style.clipPath, initialClip); assert.equal(board.children.length, 1);
-  tick(2200); assert.equal(completes, 1); assert.equal(board.children.length, 0);
-  const handle = ctx.TransitPageCurl.start(options);
-  handle.cancel(); assert.equal(board.children.length, 0); assert.equal(frames.size, 0); assert.equal(completes, 1);
 });

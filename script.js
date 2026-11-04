@@ -281,7 +281,7 @@ updateClock(); setInterval(updateClock, 1000);
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
     if (!node || node.closest('#screenSwitch, #menuSettings, #menuSettingsBtn')) return;
     if (activeScreen === 'menu' && !$('menuSettings').hidden) return;
-    if (activeScreen === 'menu') { turnMenu(); return; }
+    if (activeScreen === 'menu') { showMenuFace(!menuBack); return; }
     if (activeScreen !== 'transit') return;
     if (node.closest('#screenSwitch, #settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
     if (!$('refreshBtn').disabled) refresh(true);
@@ -318,20 +318,29 @@ updateClock(); setInterval(updateClock, 1000);
   function updateMenuDate() {
     var date = menuDesign.dateTime ? new Date(menuDesign.dateTime) : new Date();
     function two(value) { return String(value).padStart(2, '0'); }
-    var text = date.getFullYear() + '.' + two(date.getMonth() + 1) + '.' + two(date.getDate()) + ' ' + two(date.getHours()) + ':' + two(date.getMinutes());
+    var year = String(date.getFullYear()).padStart(4, '0');
+    var text = year + '.' + two(date.getMonth() + 1) + '.' + two(date.getDate()) + ' ' + two(date.getHours()) + ':' + two(date.getMinutes());
     if ($('menuDate').textContent !== text) $('menuDate').textContent = text;
-    $('menuDate').setAttribute('datetime', date.getFullYear() + '-' + two(date.getMonth() + 1) + '-' + two(date.getDate()) + 'T' + two(date.getHours()) + ':' + two(date.getMinutes()));
+    $('menuDate').setAttribute('datetime', year + '-' + two(date.getMonth() + 1) + '-' + two(date.getDate()) + 'T' + two(date.getHours()) + ':' + two(date.getMinutes()));
   }
   function renderMenuIdentity() {
     $('menuTitle').textContent = menuDesign.title; $('menuSubtitle').textContent = menuDesign.subtitle;
     $('menuSubtitle').hidden = !menuDesign.subtitle;
     updateMenuDate(); fitMenu();
   }
+  function parseMenuDigits(value) {
+    if (!value) return '';
+    if (!/^\d{12}$/.test(value)) return null;
+    var y = Number(value.slice(0, 4)), m = Number(value.slice(4, 6)), d = Number(value.slice(6, 8));
+    var h = Number(value.slice(8, 10)), minute = Number(value.slice(10, 12));
+    var date = new Date(0); date.setUTCFullYear(y, m - 1, d); date.setUTCHours(h, minute, 0, 0);
+    if (y < 1 || date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d || date.getUTCHours() !== h || date.getUTCMinutes() !== minute) return null;
+    return value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6, 8) + 'T' + value.slice(8, 10) + ':' + value.slice(10, 12);
+  }
   function toggleMenuSettings(open) {
-    if (open) cancelMenuFlip();
     $('menuSettings').hidden = !open; $('menuSettingsBtn').setAttribute('aria-expanded', String(open));
     if (open) {
-      $('menuTitleInput').value = menuDesign.title; $('menuSubtitleInput').value = menuDesign.subtitle; $('menuDateInput').value = menuDesign.dateTime;
+      $('menuTitleInput').value = menuDesign.title; $('menuSubtitleInput').value = menuDesign.subtitle; $('menuDateInput').value = menuDesign.dateTime.replace(/\D/g, '').slice(0, 12);
       $('menuSettingsStatus').textContent = ''; $('menuTitleInput').focus();
     } else $('menuSettingsBtn').focus();
   }
@@ -342,39 +351,15 @@ updateClock(); setInterval(updateClock, 1000);
     event.preventDefault();
     var next = { title: String($('menuTitleInput').value).trim(), subtitle: String($('menuSubtitleInput').value).trim(), dateTime: String($('menuDateInput').value).trim() };
     if (!next.title) { $('menuSettingsStatus').textContent = '제목을 입력하세요.'; return; }
-    if (next.dateTime && !Number.isFinite(new Date(next.dateTime).getTime())) { $('menuSettingsStatus').textContent = '날짜와 시간을 확인하세요.'; return; }
+    next.dateTime = parseMenuDigits(next.dateTime);
+    if (next.dateTime === null) { $('menuSettingsStatus').textContent = '날짜·시간을 숫자 12자리(yyyymmddhhmm)로 확인하세요.'; return; }
     try { localStorage.setItem(menuStorageKey, JSON.stringify(next)); }
     catch (_) { $('menuSettingsStatus').textContent = '저장할 수 없습니다. 브라우저 저장 설정을 확인하세요.'; return; }
     menuDesign = next; renderMenuIdentity(); toggleMenuSettings(false);
   };
   setInterval(updateMenuDate, 1000);
   renderMenuIdentity();
-  var menuBack = false, flipAnimation = null, flipBusy = false, flipGeneration = 0;
-  function cancelMenuFlip() {
-    flipGeneration++;
-    if (flipAnimation) { flipAnimation.onfinish = null; flipAnimation.cancel(); flipAnimation = null; }
-    flipBusy = false;
-  }
-  function turnMenu() {
-    if (flipBusy) return;
-    var back = !menuBack;
-    var reduceMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) { showMenuFace(back); return; }
-    var run = ++flipGeneration;
-    flipBusy = true;
-    try {
-      flipAnimation = TransitPageCurl.start({
-        sheet: $('menuSheet'), board: $('menuBoard'),
-        advance: function () { showMenuFace(back); },
-        complete: function () {
-          if (run !== flipGeneration) return;
-          flipAnimation = null; flipBusy = false; fitMenu();
-        }
-      });
-      if (!flipAnimation) { flipBusy = false; showMenuFace(back); }
-    } catch (_) { cancelMenuFlip(); showMenuFace(back); }
-  }
-
+  var menuBack = false;
   function showMenuFace(back) {
     menuBack = back;
     $('menuFront').hidden = back; $('menuBack').hidden = !back;
@@ -387,10 +372,12 @@ updateClock(); setInterval(updateClock, 1000);
     if (activeScreen !== 'menu' || !stage || !stage.getBoundingClientRect) return;
     var sheet = $('menuSheet');
     var content = sheet && sheet.offsetHeight ? sheet : board;
+    var available = Math.max(1, window.innerHeight - stage.getBoundingClientRect().top - 32);
+    var widthScale = Math.min(1.3, stage.clientWidth / 860);
+    if (sheet && sheet.style && widthScale > 0) sheet.style.minHeight = Math.max(1420, available / widthScale) + 'px';
     var height = Math.max(content.offsetHeight, content.scrollHeight + 2);
     if (!height) return;
-    var available = Math.max(1, window.innerHeight - stage.getBoundingClientRect().top - 56);
-    var scale = Math.min(1, stage.clientWidth / 860, available / height);
+    var scale = Math.min(widthScale, available / height);
     board.style.transform = 'scale(' + scale + ')';
     board.style.left = Math.max(0, (stage.clientWidth - 860 * scale) / 2) + 'px';
     stage.style.height = height * scale + 'px';
@@ -411,7 +398,6 @@ updateClock(); setInterval(updateClock, 1000);
   if (typeof window !== 'undefined') window.addEventListener('resize', fitMenuScreens);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitMenuScreens);
   function setScreen(screen, remember) {
-    cancelMenuFlip();
     activeScreen = screen;
     $('transitHeader').hidden = screen !== 'transit'; $('transitScreen').hidden = screen !== 'transit'; $('menuScreen').hidden = screen !== 'menu'; $('trotScreen').hidden = screen !== 'trot';
     document.body.setAttribute('data-screen', screen);
