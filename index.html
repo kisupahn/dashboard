@@ -85,10 +85,10 @@
     .menu-heading p { margin: 12px 0 0; font-size: clamp(20px, 2.6vw, 28px); letter-spacing: .18em; }
     .menu-heading::after { content: ""; display: block; width: 56px; height: 1px; margin: 28px auto 0; background: #a58b5c; }
     .menu-course { margin-top: 36px; }
-    .menu-course h2 { margin: 0 0 14px; color: #60451f; font: 600 13px/1.6 "Cormorant Garamond", Georgia, serif; letter-spacing: .24em; }
-    .menu-dish { margin: 18px 0 0; font-size: clamp(21px, 2.7vw, 30px); font-weight: 600; line-height: 1.6; word-break: keep-all; }
-    .menu-en { display: block; margin-top: 3px; color: #58412d; font: italic 600 clamp(19px, 2.3vw, 25px)/1.35 "Cormorant Garamond", Georgia, serif; letter-spacing: .01em; }
-    .menu-detail { display: block; margin: 6px 0; font-size: .63em; font-weight: 500; color: #533e2b; line-height: 1.8; }
+    .menu-course h2 { margin: 0 0 14px; color: #392a1b; font: 700 clamp(16px, 2vw, 21px)/1.5 Georgia, serif; letter-spacing: .12em; }
+    .menu-dish { margin: 18px 0 0; font-size: clamp(24px, 3vw, 34px); font-weight: 600; line-height: 1.6; word-break: keep-all; }
+    .menu-translation { display: block; margin-top: 6px; color: #31251b; font: 600 clamp(21px, 2.5vw, 29px)/1.45 Georgia, "Noto Serif KR", serif; letter-spacing: 0; }
+    .menu-detail { display: block; margin: 6px 0; font-size: .72em; font-weight: 600; color: #533e2b; line-height: 1.8; }
     body[data-screen="trot"] { max-width: none; height: 100vh; padding: 12px; overflow: hidden; background: repeating-linear-gradient(125deg, #ff1588 0 72px, #ff9f00 72px 144px, #fff100 144px 216px, #28e65d 216px 288px, #23d9ff 288px 360px, #6652ff 360px 432px, #d448ff 432px 504px); }
     body[data-screen="trot"] .screen-switch { background: #fff400; padding: 5px; border: 3px dashed #fc1687; box-shadow: 4px 4px #27114b; }
     body[data-screen="trot"] .screen-switch button { font-family: "Jua", sans-serif; color: #30115a; background: white; padding: 6px 12px; }
@@ -109,6 +109,7 @@
     .trot-dish h2 { margin: 0; font: 400 52px/1.16 "Jua", "Arial Black", sans-serif; color: #c6003c; text-shadow: 2px 2px white; overflow-wrap: anywhere; letter-spacing: -.035em; }
     .trot-dish:nth-child(even) h2 { font-family: "Gugi", cursive; font-size: 40px; color: #201a86; }
     .trot-dish:nth-child(3n) h2 { font-family: "Black Han Sans", Impact, sans-serif; color: #fff100; text-shadow: 3px 3px #4a064c; }
+    .trot-dish.brisket h2 { font-size: 66px; line-height: 1.06; }
     .trot-english { margin: 10px 0 0; color: #14276d; font: 900 italic 25px/1.18 Georgia, serif; overflow-wrap: anywhere; }
     .trot-dish:nth-child(3n) .trot-english { color: white; font-family: "Courier New", monospace; }
     .trot-dish:nth-child(1), .trot-dish:nth-child(5), .trot-dish:nth-child(8) { background: #9cff32; border-color: #007236; }
@@ -126,6 +127,8 @@
     .trot-stage[data-layout="landscape"] .trot-dish { padding: 6px; }
     .trot-stage[data-layout="landscape"] .trot-dish h2 { font-size: 43px; }
     .trot-stage[data-layout="landscape"] .trot-dish:nth-child(even) h2 { font-size: 34px; }
+    .trot-stage[data-layout="landscape"] .trot-dish.brisket h2 { font-size: 60px; line-height: 1.02; }
+    .trot-stage[data-layout="landscape"] .trot-dish.brisket h2 br { display: none; }
     .trot-stage[data-layout="landscape"] .trot-english { font-size: 20px; margin-top: 4px; }
     .trot-stage[data-layout="landscape"] .trot-detail { font-size: 18px; margin: 3px 0; }
     .trot-stage[data-layout="landscape"] .trot-finale { font-size: 28px; }
@@ -156,7 +159,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.4</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.5</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -180,27 +183,27 @@
   </div>
   <main id="menuScreen" hidden aria-label="오늘의 메뉴">
     <div class="menu-paper">
-      <div class="menu-heading"><h1 lang="en">Menu</h1><p>오늘의 메뉴</p></div>
-      <section class="menu-course" aria-label="밥"><h2 lang="en">RICE</h2>
-        <p class="menu-dish">늙은호박콩밥<span class="menu-en" lang="en">Pumpkin &amp; Bean Rice</span></p>
+      <div class="menu-heading"><h1 lang="fr">Menu</h1><p>오늘의 메뉴</p></div>
+      <section class="menu-course" aria-label="밥"><h2 lang="fr">RIZ</h2>
+        <p class="menu-dish">늙은호박콩밥<span class="menu-translation" lang="fr">Riz au potiron et aux haricots</span></p>
       </section>
-      <section class="menu-course" aria-label="주요리"><h2 lang="en">MAIN DISHES</h2>
-        <p class="menu-dish">삼겹살 김치찜<span class="menu-en" lang="en">Braised Pork Belly with Kimchi</span></p>
-        <p class="menu-dish">버섯부추차돌박이<span class="menu-en" lang="en">Thin-Sliced Beef Brisket with Mushrooms &amp; Garlic Chives</span></p>
+      <section class="menu-course" aria-label="주요리"><h2 lang="fr">PLATS PRINCIPAUX</h2>
+        <p class="menu-dish">삼겹살 김치찜<span class="menu-translation" lang="fr">Poitrine de porc mijotée au kimchi</span></p>
+        <p class="menu-dish">버섯부추차돌박이<span class="menu-translation" lang="fr">Fines tranches de poitrine de bœuf aux champignons et à la ciboulette chinoise</span></p>
       </section>
-      <section class="menu-course" aria-label="모둠전"><h2 lang="en">A TRIO OF JEON</h2>
-        <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-en" lang="en">Shiitake Mushroom · Korean Zucchini<br>Heart-Shaped Imitation Crab Pancakes</span></p>
+      <section class="menu-course" aria-label="모둠전"><h2 lang="fr">TRIO DE JEON</h2>
+        <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="fr">Galettes de shiitakés et de courgette coréenne<br>Galettes de surimi en forme de cœur</span></p>
       </section>
-      <section class="menu-course" aria-label="국과 곁들임"><h2 lang="en">SOUP &amp; ACCOMPANIMENT</h2>
-        <p class="menu-dish">소고기뭇국<span class="menu-en" lang="en">Beef &amp; Radish Soup</span></p>
-        <p class="menu-dish">동치미<span class="menu-en" lang="en">Dongchimi · Chilled Radish Water Kimchi</span></p>
+      <section class="menu-course" aria-label="국과 곁들임"><h2 lang="fr">SOUPES ET ACCOMPAGNEMENTS</h2>
+        <p class="menu-dish">소고기뭇국<span class="menu-translation" lang="fr">Soupe de bœuf au radis</span></p>
+        <p class="menu-dish">동치미<span class="menu-translation" lang="fr">Dongchimi · Kimchi de radis en saumure, servi froid</span></p>
       </section>
-      <section class="menu-course" aria-label="후식"><h2 lang="en">DESSERT</h2>
-        <p class="menu-dish">호박고구마케이크<span class="menu-en" lang="en">Golden Sweet Potato Cake</span></p>
-        <p class="menu-dish">말차판나코타<span class="menu-en" lang="en">Matcha Panna Cotta</span></p>
+      <section class="menu-course" aria-label="후식"><h2 lang="fr">DESSERTS</h2>
+        <p class="menu-dish">호박고구마케이크<span class="menu-translation" lang="fr">Gâteau à la patate douce</span></p>
+        <p class="menu-dish">말차판나코타<span class="menu-translation" lang="fr">Panna cotta au matcha</span></p>
       </section>
-      <section class="menu-course" aria-label="음료"><h2 lang="en">TO DRINK</h2>
-        <p class="menu-dish">여주 끓인 물<span class="menu-en" lang="en">Bitter Melon Infusion</span></p>
+      <section class="menu-course" aria-label="음료"><h2 lang="fr">BOISSON</h2>
+        <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="fr">Infusion de melon amer</span></p>
       </section>
     </div>
   </main>
@@ -218,7 +221,7 @@
       <section class="trot-dish"><h2>모둠전 3종 쎄트</h2><p class="trot-detail">표고버섯전 · 애호박전 · 맛살하트전</p><p class="trot-english" lang="en">MUSHROOM JEON!<br>BABY PUMPKIN JEON!<br>CRAB STICK LOVE HEART!</p></section>
       <section class="trot-dish"><h2>동 치 미</h2><p class="trot-english" lang="en">DONG! CHI! ME!</p></section>
       <section class="trot-dish"><h2>소고기뭇국</h2><p class="trot-english" lang="en">BEEF &amp; MOO SOUP</p></section>
-      <section class="trot-dish"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE PARK TWO</p></section>
+      <section class="trot-dish brisket"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE PARK TWO</p></section>
       <section class="trot-dish"><h2>호박고구마케이크</h2><p class="trot-english" lang="en">SWEET POTATO<br>VERY CAKE NICE</p></section>
       <section class="trot-dish"><h2>말차판나코타</h2><p class="trot-english" lang="en">MATCHA PANNA COTTA</p></section>
       <section class="trot-dish"><h2>여주 끓인 물</h2><p class="trot-english" lang="en">BITTER MELON<br>HOT WATER SPECIAL</p></section>
@@ -227,9 +230,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.4"></script>
-  <script src="route-catalog.js?v=20261104.4"></script>
-  <script src="browser-api.js?v=20261104.4"></script>
-  <script src="script.js?v=20261104.4"></script>
+  <script src="news-player.js?v=20261104.5"></script>
+  <script src="route-catalog.js?v=20261104.5"></script>
+  <script src="browser-api.js?v=20261104.5"></script>
+  <script src="script.js?v=20261104.5"></script>
 </body>
 </html>
