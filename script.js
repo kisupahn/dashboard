@@ -281,7 +281,7 @@ updateClock(); setInterval(updateClock, 1000);
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
     if (!node || node.closest('#screenSwitch, #menuSettings, #menuSettingsBtn')) return;
     if (activeScreen === 'menu' && !$('menuSettings').hidden) return;
-    if (activeScreen === 'menu') { showMenuFace(!menuBack); return; }
+    if (activeScreen === 'menu') { turnMenu(); return; }
     if (activeScreen !== 'transit') return;
     if (node.closest('#screenSwitch, #settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
     if (!$('refreshBtn').disabled) refresh(true);
@@ -328,6 +328,7 @@ updateClock(); setInterval(updateClock, 1000);
     updateMenuDate(); fitMenu();
   }
   function toggleMenuSettings(open) {
+    if (open) cancelMenuFlip();
     $('menuSettings').hidden = !open; $('menuSettingsBtn').setAttribute('aria-expanded', String(open));
     if (open) {
       $('menuTitleInput').value = menuDesign.title; $('menuSubtitleInput').value = menuDesign.subtitle; $('menuDateInput').value = menuDesign.dateTime;
@@ -348,7 +349,42 @@ updateClock(); setInterval(updateClock, 1000);
   };
   setInterval(updateMenuDate, 1000);
   renderMenuIdentity();
-  var menuBack = false;
+  var menuBack = false, flipAnimation = null, flipBusy = false, flipGeneration = 0;
+  function cancelMenuFlip() {
+    flipGeneration++;
+    if (flipAnimation) { flipAnimation.onfinish = null; flipAnimation.cancel(); flipAnimation = null; }
+    flipBusy = false;
+  }
+  function turnMenu() {
+    if (flipBusy) return;
+    var back = !menuBack, sheet = $('menuSheet');
+    var reduceMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!sheet.animate || reduceMotion) { showMenuFace(back); return; }
+    var run = ++flipGeneration, direction = back ? -1 : 1;
+    var flat = 'perspective(1500px) rotateY(0deg)';
+    flipBusy = true;
+    try {
+      flipAnimation = sheet.animate([
+        { transform: flat, boxShadow: '0 0 0 #30201400' },
+        { transform: 'perspective(1500px) rotateY(' + (direction * 90) + 'deg)', boxShadow: '20px 8px 36px #30201444' }
+      ], { duration: 220, easing: 'ease-in', fill: 'forwards' });
+      flipAnimation.onfinish = function () {
+        if (run !== flipGeneration || activeScreen !== 'menu') return;
+        showMenuFace(back);
+        var outgoing = flipAnimation;
+        flipAnimation = sheet.animate([
+          { transform: 'perspective(1500px) rotateY(' + (-direction * 90) + 'deg)', boxShadow: '-20px 8px 36px #30201444' },
+          { transform: flat, boxShadow: '0 0 0 #30201400' }
+        ], { duration: 240, easing: 'ease-out', fill: 'forwards' });
+        outgoing.onfinish = null; outgoing.cancel();
+        flipAnimation.onfinish = function () {
+          if (run !== flipGeneration) return;
+          flipAnimation.cancel(); flipAnimation = null; flipBusy = false;
+        };
+      };
+    } catch (_) { cancelMenuFlip(); showMenuFace(back); }
+  }
+
   function showMenuFace(back) {
     menuBack = back;
     $('menuFront').hidden = back; $('menuBack').hidden = !back;
@@ -359,7 +395,9 @@ updateClock(); setInterval(updateClock, 1000);
   function fitMenu() {
     var stage = $('menuStage'), board = $('menuBoard');
     if (activeScreen !== 'menu' || !stage || !stage.getBoundingClientRect) return;
-    var height = Math.max(board.offsetHeight, board.scrollHeight + 2);
+    var sheet = $('menuSheet');
+    var content = sheet && sheet.offsetHeight ? sheet : board;
+    var height = Math.max(content.offsetHeight, content.scrollHeight + 2);
     if (!height) return;
     var available = Math.max(1, window.innerHeight - stage.getBoundingClientRect().top - 56);
     var scale = Math.min(1, stage.clientWidth / 860, available / height);
@@ -383,6 +421,7 @@ updateClock(); setInterval(updateClock, 1000);
   if (typeof window !== 'undefined') window.addEventListener('resize', fitMenuScreens);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitMenuScreens);
   function setScreen(screen, remember) {
+    cancelMenuFlip();
     activeScreen = screen;
     $('transitHeader').hidden = screen !== 'transit'; $('transitScreen').hidden = screen !== 'transit'; $('menuScreen').hidden = screen !== 'menu'; $('trotScreen').hidden = screen !== 'trot';
     document.body.setAttribute('data-screen', screen);

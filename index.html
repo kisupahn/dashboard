@@ -80,7 +80,8 @@
     body[data-screen="menu"] .screen-switch button { font-family: "Noto Serif KR", Georgia, serif; border-color: #d7c9af; background: transparent; color: #776242; }
     body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
-    .menu-paper { position: absolute; top: 0; left: 0; width: 860px; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1220px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .menu-board { position: absolute; top: 0; left: 0; width: 860px; transform-origin: 0 0; }
+    .menu-paper { position: relative; width: 100%; background: #f6f1e7; backface-visibility: hidden; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1220px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
     .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
     .menu-heading { margin-bottom: 24px; }
     .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
@@ -166,7 +167,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.10</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.11</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -189,7 +190,7 @@
 
   </div>
   <main id="menuScreen" hidden aria-label="메뉴판">
-    <div id="menuStage" class="menu-stage"><div id="menuBoard" class="menu-paper">
+    <div id="menuStage" class="menu-stage"><div id="menuBoard" class="menu-board"><div id="menuSheet" class="menu-paper">
       <div class="menu-heading"><h1 id="menuTitle" lang="it">La Nostra Tavola</h1><p id="menuSubtitle">우리의 식탁</p><time id="menuDate" class="menu-date"></time></div>
       <div id="menuFront" class="menu-face" aria-label="앞면 · 식사">
         <section class="menu-course" aria-label="전채"><h2 lang="it">ANTIPASTO</h2>
@@ -197,7 +198,7 @@
         </section>
         <section class="menu-course" aria-label="첫 요리"><h2 lang="it">PRIMI</h2>
           <p class="menu-dish">늙은호박콩밥<span class="menu-translation" lang="it">Riso con zucca e fagioli</span></p>
-          <p class="menu-dish">소고기뭇국<span class="menu-translation" lang="it">Zuppa di manzo e ravanello</span></p>
+          <p class="menu-dish">소고기무국<span class="menu-translation" lang="it">Zuppa di manzo e ravanello</span></p>
         </section>
         <section class="menu-course" aria-label="주요리"><h2 lang="it">SECONDI</h2>
           <p class="menu-dish">삼겹살 김치찜<span class="menu-translation" lang="it">Pancetta brasata al kimchi</span></p>
@@ -218,7 +219,7 @@
       </div>
       <button id="flipMenuBtn" class="sr-only" type="button" aria-label="뒷면 보기">메뉴 뒤집기</button>
       <p id="menuFaceStatus" class="sr-only" role="status">앞면</p>
-    </div></div>
+    </div></div></div>
   </main>
 
   <button id="menuSettingsBtn" class="menu-settings-toggle" type="button" aria-label="메뉴판 설정" aria-expanded="false" aria-controls="menuSettings" hidden>설정</button>
@@ -245,7 +246,7 @@
       <section class="trot-dish"><h2>삼겹살 김치찜</h2><p class="trot-english" lang="en">SAM GYEOB SSAL<br>KIMCHI STEAM!!</p></section>
       <section class="trot-dish"><h2>모둠전 3종 쎄트</h2><p class="trot-detail">표고버섯전 · 애호박전 · 맛살하트전</p><p class="trot-english" lang="en">MUSHROOM JEON!<br>BABY PUMPKIN JEON!<br>CRAB STICK LOVE HEART!</p></section>
       <section class="trot-dish"><h2>동 치 미</h2><p class="trot-english" lang="en">DONG! CHI! ME!</p></section>
-      <section class="trot-dish"><h2>소고기뭇국</h2><p class="trot-english" lang="en">BEEF &amp; MOO SOUP</p></section>
+      <section class="trot-dish"><h2>소고기무국</h2><p class="trot-english" lang="en">BEEF &amp; MOO SOUP</p></section>
       <section class="trot-dish brisket"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE PARK TWO</p></section>
       <section class="trot-dish"><h2>호박고구마케이크</h2><p class="trot-english" lang="en">SWEET POTATO<br>VERY CAKE NICE</p></section>
       <section class="trot-dish"><h2>말차판나코타</h2><p class="trot-english" lang="en">MATCHA PANNA COTTA</p></section>
@@ -255,9 +256,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.10"></script>
-  <script src="route-catalog.js?v=20261104.10"></script>
-  <script src="browser-api.js?v=20261104.10"></script>
-  <script src="script.js?v=20261104.10"></script>
+  <script src="news-player.js?v=20261104.11"></script>
+  <script src="route-catalog.js?v=20261104.11"></script>
+  <script src="browser-api.js?v=20261104.11"></script>
+  <script src="script.js?v=20261104.11"></script>
 </body>
 </html>

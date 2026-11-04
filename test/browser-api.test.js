@@ -77,7 +77,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard', 'menuFront', 'menuBack', 'flipMenuBtn', 'menuFaceStatus', 'menuSettingsBtn', 'menuSettings', 'menuSettingsForm', 'menuTitle', 'menuSubtitle', 'menuDate', 'menuTitleInput', 'menuSubtitleInput', 'menuDateInput', 'menuSettingsStatus', 'closeMenuSettingsBtn']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard', 'menuFront', 'menuBack', 'flipMenuBtn', 'menuFaceStatus', 'menuSheet', 'menuSettingsBtn', 'menuSettings', 'menuSettingsForm', 'menuTitle', 'menuSubtitle', 'menuDate', 'menuTitleInput', 'menuSubtitleInput', 'menuDateInput', 'menuSettingsStatus', 'closeMenuSettingsBtn']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
@@ -171,12 +171,25 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   ctx.window.innerWidth = 390; ctx.window.innerHeight = 844; ids.menuStage.clientWidth = 358; events['window-resize']();
   assert(parseFloat(ids.menuStage.style.height) + 90 <= 844 - 20);
   const menuScale = Number(ids.menuBoard.style.transform.match(/scale\(([^)]+)\)/)[1]); assert(menuScale * 860 <= 358);
+  const flipPhases = [];
+  ids.menuSheet.animate = (frames, options) => { const animation = { frames, options, cancel() { this.cancelled = true; } }; flipPhases.push(animation); return animation; };
+  events.click({ target: { closest: () => null } });
+  assert.equal(flipPhases.length, 1); assert.equal(ids.menuBack.hidden, true);
+  events.click({ target: { closest: () => null } }); assert.equal(flipPhases.length, 1);
+  flipPhases[0].onfinish(); assert.equal(ids.menuBack.hidden, false); assert.equal(flipPhases.length, 2);
+  flipPhases[1].onfinish(); assert.equal(flipPhases[1].cancelled, true);
+  ctx.window.matchMedia = () => ({ matches: true });
+  events.click({ target: { closest: () => null } });
+  assert.equal(ids.menuFront.hidden, false); assert.equal(flipPhases.length, 2);
+  ctx.window.matchMedia = undefined;
+  events.click({ target: { closest: () => null } }); assert.equal(flipPhases.length, 3);
   ctx.window.innerWidth = 1080; ctx.window.innerHeight = 1920; assert.equal(ids.transitHeader.hidden, true); assert.equal(ids.transitScreen.hidden, true);
   assert.equal(ids.newsPlayer.children.length, 0);
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   events.visibilitychange();
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   ids.trotScreenBtn.onclick();
+  assert.equal(flipPhases[2].cancelled, true); assert.equal(flipPhases[2].onfinish, null);
   assert.equal(ids.trotScreen.hidden, false);
   assert(parseFloat(ids.trotStage.style.height) + 90 <= 1920 - 24);
   const portraitScale = Number(ids.trotBoard.style.transform.match(/scale\(([^)]+)\)/)[1]);
