@@ -66,11 +66,15 @@
     [['0%', '#b9aa92'], ['7%', '#e4d8c3'], ['18%', '#fffdf7'], ['55%', '#f7f0e2'], ['100%', '#d5c5a8']].forEach(function (stop) {
       gradient.appendChild(svgNode('stop', { offset: stop[0], 'stop-color': stop[1] }));
     });
-    defs.appendChild(gradient); svg.appendChild(defs);
+    defs.appendChild(gradient);
+    var grain = svgNode('pattern', { id: id + '-grain', patternUnits: 'userSpaceOnUse', width: '240', height: '240' });
+    grain.appendChild(svgNode('image', { href: 'paper-grain.svg?v=20261104.14', width: '240', height: '240' }));
+    defs.appendChild(grain); svg.appendChild(defs);
     var shadow = svgNode('path', { fill: '#372819', opacity: '.24', 'class': 'page-curl-shadow' });
     var back = svgNode('path', { fill: 'url(#' + id + ')', stroke: '#b9aa90', 'stroke-width': '1.1' });
+    var texture = svgNode('path', { fill: 'url(#' + id + '-grain)', opacity: '.7' });
     var highlight = svgNode('path', { fill: 'none', stroke: '#fffdf8', 'stroke-width': '2', opacity: '.7' });
-    svg.appendChild(shadow); svg.appendChild(back); svg.appendChild(highlight); layer.appendChild(svg);
+    svg.appendChild(shadow); svg.appendChild(back); svg.appendChild(texture); svg.appendChild(highlight); layer.appendChild(svg);
     var frame, stopped = false, started;
     function cleanup() { if (frame != null) root.cancelAnimationFrame(frame); layer.remove(); }
     function finish() { if (stopped) return; stopped = true; cleanup(); options.complete(); }
@@ -78,7 +82,7 @@
       var g = geometry(width, height, progress);
       page.style.clipPath = 'polygon(' + (g.flat.length ? g.flat.map(function (p) { return p.x + 'px ' + p.y + 'px'; }).join(',') : '0 0,0 0,0 0') + ')';
       var path = roundedPath(g.folded, Math.min(width, height) * .045);
-      back.setAttribute('d', path); shadow.setAttribute('d', path);
+      back.setAttribute('d', path); texture.setAttribute('d', path); shadow.setAttribute('d', path);
       shadow.setAttribute('transform', 'translate(' + (8 + 16 * Math.sin(progress * Math.PI)) + ' 12)');
       if (g.crease.length >= 2) {
         var a = g.crease[0], b = g.crease[g.crease.length - 1];
