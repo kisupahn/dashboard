@@ -8,14 +8,19 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <style>
     :root { --text-scale: 1.35; --page: #ffffff; --ink: #1a1c20; --card: #ffffff; --edge: #dedfe3; --muted: #757982; --control: #f5f5f6; --error: #a83832; }
     * { box-sizing: border-box; }
     body { margin: 0 auto; padding: clamp(18px, 3vw, 40px); max-width: 1200px; background: var(--page); color: var(--ink); font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; -webkit-font-smoothing: antialiased; }
+    .screen-bar { display: flex; align-items: flex-start; gap: 24px; }
+    .screen-bar header { flex: 1; min-width: 0; }
+    .screen-switch { display: flex; gap: 4px; flex-shrink: 0; padding-top: 12px; margin-left: auto; }
+    .screen-switch button { padding: 9px 16px; }
+    .screen-switch [aria-pressed="true"] { background: var(--ink); color: var(--page); }
     header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 28px; }
     header > div { margin-left: auto; }
-    h1 { flex: 1 0 100%; font-size: calc(clamp(48px, 11vw, 148px) * var(--text-scale)); font-weight: 500; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.045em; margin: 0; }
+    h1 { flex: 1 0 100%; font-size: calc(clamp(36px, 8vw, 128px) * var(--text-scale)); font-weight: 500; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.045em; margin: 0; }
     h2 { margin: 0; font-size: calc(clamp(25px, 3.5vw, 40px) * var(--text-scale)); letter-spacing: -.04em; line-height: 1.35; word-break: keep-all; }
     button, input { font: inherit; border: 1px solid var(--edge); border-radius: 8px; padding: 10px 14px; }
     button { cursor: pointer; background: var(--control); color: var(--ink); } button:disabled { opacity: .45; }
@@ -71,6 +76,20 @@
     pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
     #refreshStatus { font-size: 12px; color: var(--muted); } #saveStatus:empty { display: none; } #emptyState { color: var(--muted); }
     [hidden] { display: none !important; }
+    body[data-screen="menu"] { background: #f6f1e7; color: #3e3329; max-width: 1200px; }
+    body[data-screen="menu"] .screen-switch button { font-family: "Noto Serif KR", Georgia, serif; border-color: #d7c9af; background: transparent; color: #776242; }
+    body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
+    .menu-paper { max-width: 800px; margin: 30px auto 32px; padding: clamp(28px, 5vw, 64px); border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .menu-heading { margin-bottom: 46px; }
+    .menu-heading h1 { margin: 0; font: italic 400 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; }
+    .menu-heading p { margin: 12px 0 0; font-size: clamp(20px, 2.6vw, 28px); letter-spacing: .18em; }
+    .menu-heading::after { content: ""; display: block; width: 56px; height: 1px; margin: 28px auto 0; background: #a58b5c; }
+    .menu-course { margin-top: 36px; }
+    .menu-course h2 { margin: 0 0 14px; color: #8b724a; font: 500 13px/1.6 "Cormorant Garamond", Georgia, serif; letter-spacing: .24em; }
+    .menu-dish { margin: 18px 0 0; font-size: clamp(21px, 2.7vw, 30px); font-weight: 500; line-height: 1.6; word-break: keep-all; }
+    .menu-en { display: block; margin-top: 3px; color: #8b7965; font: italic 400 clamp(19px, 2.3vw, 25px)/1.35 "Cormorant Garamond", Georgia, serif; letter-spacing: .01em; }
+    .menu-detail { display: block; margin: 6px 0; font-size: .63em; font-weight: 400; color: #76634f; line-height: 1.8; }
+    @media(max-width: 600px) { .screen-bar { flex-wrap: wrap; gap: 8px; } .screen-switch { order: -1; } .screen-bar header { flex-basis: 100%; } .menu-paper { margin-top: 22px; padding: 34px 18px; } }
     @media (min-width: 1000px) and (orientation: landscape) {
       body { max-width: 1920px; }
       .dashboard-layout { grid-template-columns: minmax(0, .95fr) minmax(0, 1.25fr); gap: clamp(24px, 3vw, 48px); }
@@ -82,8 +101,10 @@
 </head>
 
 <body>
-  <header><h1 id="clock">Loading...</h1><p id="date" class="date"></p><div><button id="refreshBtn" type="button">갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
+  <div class="screen-bar"><header id="transitHeader"><h1 id="clock">Loading...</h1><p id="date" class="date"></p><div><button id="refreshBtn" type="button">갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
+  <nav id="screenSwitch" class="screen-switch" aria-label="화면 선택"><button id="transitScreenBtn" type="button" aria-pressed="true" aria-controls="transitScreen">교통</button><button id="menuScreenBtn" type="button" aria-pressed="false" aria-controls="menuScreen">메뉴</button></nav></div>
 
+  <div id="transitScreen">
   <section id="settings" hidden>
     <div class="settings-head"><h2>교통정보 설정</h2><button id="closeSettingsBtn" type="button" aria-label="설정 닫기">닫기</button></div>
     <form id="settingsForm">
@@ -94,7 +115,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261103.13</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.1</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -115,9 +136,37 @@
 
   </div>
 
-  <script src="news-player.js?v=20261103.13"></script>
-  <script src="route-catalog.js?v=20261103.13"></script>
-  <script src="browser-api.js?v=20261103.13"></script>
-  <script src="script.js?v=20261103.13"></script>
+  </div>
+  <main id="menuScreen" hidden aria-label="오늘의 메뉴">
+    <div class="menu-paper">
+      <div class="menu-heading"><h1 lang="en">Menu</h1><p>오늘의 메뉴</p></div>
+      <section class="menu-course" aria-label="밥"><h2 lang="en">RICE</h2>
+        <p class="menu-dish">늙은호박콩밥<span class="menu-en" lang="en">Pumpkin &amp; Bean Rice</span></p>
+      </section>
+      <section class="menu-course" aria-label="주요리"><h2 lang="en">MAIN DISHES</h2>
+        <p class="menu-dish">삼겹살 김치찜<span class="menu-en" lang="en">Braised Pork Belly with Kimchi</span></p>
+        <p class="menu-dish">버섯부추차돌박이<span class="menu-en" lang="en">Thin-Sliced Beef Brisket with Mushrooms &amp; Garlic Chives</span></p>
+      </section>
+      <section class="menu-course" aria-label="모둠전"><h2 lang="en">A TRIO OF JEON</h2>
+        <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-en" lang="en">Shiitake Mushroom · Korean Zucchini<br>Heart-Shaped Imitation Crab Pancakes</span></p>
+      </section>
+      <section class="menu-course" aria-label="국과 곁들임"><h2 lang="en">SOUP &amp; ACCOMPANIMENT</h2>
+        <p class="menu-dish">소고기뭇국<span class="menu-en" lang="en">Beef &amp; Radish Soup</span></p>
+        <p class="menu-dish">동치미<span class="menu-en" lang="en">Dongchimi · Chilled Radish Water Kimchi</span></p>
+      </section>
+      <section class="menu-course" aria-label="후식"><h2 lang="en">DESSERT</h2>
+        <p class="menu-dish">호박고구마케이크<span class="menu-en" lang="en">Golden Sweet Potato Cake</span></p>
+        <p class="menu-dish">말차판나코타<span class="menu-en" lang="en">Matcha Panna Cotta</span></p>
+      </section>
+      <section class="menu-course" aria-label="음료"><h2 lang="en">TO DRINK</h2>
+        <p class="menu-dish">여주 끓인 물<span class="menu-en" lang="en">Bitter Melon Infusion</span></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="news-player.js?v=20261104.1"></script>
+  <script src="route-catalog.js?v=20261104.1"></script>
+  <script src="browser-api.js?v=20261104.1"></script>
+  <script src="script.js?v=20261104.1"></script>
 </body>
 </html>

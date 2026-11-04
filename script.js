@@ -10,6 +10,8 @@ updateClock(); setInterval(updateClock, 1000);
   'use strict';
   var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
+  var screenStorageKey = 'seoul-dashboard-screen-v1', activeScreen = 'transit';
+  try { if (localStorage.getItem(screenStorageKey) === 'menu') activeScreen = 'menu'; } catch (_) {}
   var fields = ['relayUrl', 'interval', 'textScale', 'newsUrl'];
   var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 60, textScale: 135, newsEnabled: true, newsUrl: TransitNews.defaultURL };
   var timer, generation = 0, controllers = [], autoCount = 0, awaitingManual = false;
@@ -47,6 +49,7 @@ updateClock(); setInterval(updateClock, 1000);
   };
   var newsSignature = '';
   function renderNews() {
+    if (activeScreen !== 'transit') { $('newsPanel').hidden = true; return; }
     $('newsEnabled').checked = settings.newsEnabled; $('newsUrl').value = settings.newsUrl;
     var news = null;
     try { if (settings.newsEnabled) news = TransitNews.source(settings.newsUrl); }
@@ -216,6 +219,7 @@ updateClock(); setInterval(updateClock, 1000);
   var cards = [], signature = '';
   setInterval(function () { cards.forEach(function (card) { card.ticks.forEach(function (tick) { tick(); }); }); }, 1000);
   async function refresh(force, automatic) {
+    if (activeScreen !== 'transit') return;
     if (awaitingManual && force !== true) return;
     if (force === true) {
       autoCount = 0; awaitingManual = false;
@@ -264,7 +268,8 @@ updateClock(); setInterval(updateClock, 1000);
   }
   document.addEventListener('click', function (event) {
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
-    if (!node || node.closest('#settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
+    if (activeScreen !== 'transit') return;
+    if (!node || node.closest('#screenSwitch, #settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
     if (!$('refreshBtn').disabled) refresh(true);
   });
   $('settingsForm').onsubmit = function (event) {
@@ -296,5 +301,21 @@ updateClock(); setInterval(updateClock, 1000);
     refresh();
   };
   document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(timer); } else { refresh(); } });
-  refresh();
+  function setScreen(screen, remember) {
+    activeScreen = screen;
+    $('transitHeader').hidden = screen === 'menu'; $('transitScreen').hidden = screen === 'menu'; $('menuScreen').hidden = screen !== 'menu';
+    document.body.setAttribute('data-screen', screen);
+    $('transitScreenBtn').setAttribute('aria-pressed', String(screen === 'transit'));
+    $('menuScreenBtn').setAttribute('aria-pressed', String(screen === 'menu'));
+    if (remember !== false) { try { localStorage.setItem(screenStorageKey, screen); } catch (_) {} }
+    if (screen === 'menu') {
+      clearTimeout(timer); controllers.forEach(function (controller) { controller.abort(); }); controllers = []; generation++;
+      $('refreshBtn').disabled = false;
+      $('newsPlayer').textContent = ''; newsSignature = '';
+      if (!$('settings').hidden) toggle(false);
+    } else { renderNews(); refresh(remember !== false); }
+  }
+  $('transitScreenBtn').onclick = function () { if (activeScreen !== 'transit') setScreen('transit'); };
+  $('menuScreenBtn').onclick = function () { if (activeScreen !== 'menu') setScreen('menu'); };
+  setScreen(activeScreen, false);
 })();
