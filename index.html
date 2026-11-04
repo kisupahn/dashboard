@@ -82,6 +82,10 @@
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
     .menu-board { position: absolute; top: 0; left: 0; width: 860px; transform-origin: 0 0; }
     .menu-paper { position: relative; width: 100%; background: #f6f1e7; backface-visibility: hidden; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1220px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .page-curl-layer { position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+    .page-curl-current { position: absolute; inset: 0; margin: 0; will-change: clip-path; }
+    .page-curl-layer > svg { position: absolute; inset: 0; overflow: visible; }
+    .page-curl-shadow { filter: blur(12px); }
     .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
     .menu-heading { margin-bottom: 24px; }
     .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
@@ -167,7 +171,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.11</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.12</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -192,7 +196,7 @@
   <main id="menuScreen" hidden aria-label="메뉴판">
     <div id="menuStage" class="menu-stage"><div id="menuBoard" class="menu-board"><div id="menuSheet" class="menu-paper">
       <div class="menu-heading"><h1 id="menuTitle" lang="it">La Nostra Tavola</h1><p id="menuSubtitle">우리의 식탁</p><time id="menuDate" class="menu-date"></time></div>
-      <div id="menuFront" class="menu-face" aria-label="앞면 · 식사">
+      <div id="menuFront" class="menu-face" aria-label="첫 페이지 · 식사">
         <section class="menu-course" aria-label="전채"><h2 lang="it">ANTIPASTO</h2>
           <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="it">Tris di jeon · Shiitake, zucchine e surimi</span></p>
         </section>
@@ -208,7 +212,7 @@
           <p class="menu-dish">동치미<span class="menu-translation" lang="it">Dongchimi di ravanello</span></p>
         </section>
       </div>
-      <div id="menuBack" class="menu-face" hidden aria-label="뒷면 · 후식과 음료">
+      <div id="menuBack" class="menu-face" hidden aria-label="다음 페이지 · 후식과 음료">
         <section class="menu-course" aria-label="후식"><h2 lang="it">DOLCI</h2>
           <p class="menu-dish">호박고구마케이크<span class="menu-translation" lang="it">Torta di patate dolci</span></p>
           <p class="menu-dish">말차판나코타<span class="menu-translation" lang="it">Panna cotta al matcha</span></p>
@@ -217,8 +221,8 @@
           <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="it">Infuso di melone amaro</span></p>
         </section>
       </div>
-      <button id="flipMenuBtn" class="sr-only" type="button" aria-label="뒷면 보기">메뉴 뒤집기</button>
-      <p id="menuFaceStatus" class="sr-only" role="status">앞면</p>
+      <button id="flipMenuBtn" class="sr-only" type="button" aria-label="다음 페이지 보기">메뉴 뒤집기</button>
+      <p id="menuFaceStatus" class="sr-only" role="status">1 / 2 페이지</p>
     </div></div></div>
   </main>
 
@@ -256,9 +260,10 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.11"></script>
-  <script src="route-catalog.js?v=20261104.11"></script>
-  <script src="browser-api.js?v=20261104.11"></script>
-  <script src="script.js?v=20261104.11"></script>
+  <script src="news-player.js?v=20261104.12"></script>
+  <script src="route-catalog.js?v=20261104.12"></script>
+  <script src="browser-api.js?v=20261104.12"></script>
+  <script src="page-curl.js?v=20261104.12"></script>
+  <script src="script.js?v=20261104.12"></script>
 </body>
 </html>

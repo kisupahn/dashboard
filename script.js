@@ -357,39 +357,29 @@ updateClock(); setInterval(updateClock, 1000);
   }
   function turnMenu() {
     if (flipBusy) return;
-    var back = !menuBack, sheet = $('menuSheet');
+    var back = !menuBack;
     var reduceMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!sheet.animate || reduceMotion) { showMenuFace(back); return; }
-    var run = ++flipGeneration, direction = back ? -1 : 1;
-    var flat = 'perspective(1500px) rotateY(0deg)';
+    if (reduceMotion) { showMenuFace(back); return; }
+    var run = ++flipGeneration;
     flipBusy = true;
     try {
-      flipAnimation = sheet.animate([
-        { transform: flat, boxShadow: '0 0 0 #30201400' },
-        { transform: 'perspective(1500px) rotateY(' + (direction * 90) + 'deg)', boxShadow: '20px 8px 36px #30201444' }
-      ], { duration: 220, easing: 'ease-in', fill: 'forwards' });
-      flipAnimation.onfinish = function () {
-        if (run !== flipGeneration || activeScreen !== 'menu') return;
-        showMenuFace(back);
-        var outgoing = flipAnimation;
-        flipAnimation = sheet.animate([
-          { transform: 'perspective(1500px) rotateY(' + (-direction * 90) + 'deg)', boxShadow: '-20px 8px 36px #30201444' },
-          { transform: flat, boxShadow: '0 0 0 #30201400' }
-        ], { duration: 240, easing: 'ease-out', fill: 'forwards' });
-        outgoing.onfinish = null; outgoing.cancel();
-        flipAnimation.onfinish = function () {
+      flipAnimation = TransitPageCurl.start({
+        sheet: $('menuSheet'), board: $('menuBoard'),
+        advance: function () { showMenuFace(back); },
+        complete: function () {
           if (run !== flipGeneration) return;
-          flipAnimation.cancel(); flipAnimation = null; flipBusy = false;
-        };
-      };
+          flipAnimation = null; flipBusy = false; fitMenu();
+        }
+      });
+      if (!flipAnimation) { flipBusy = false; showMenuFace(back); }
     } catch (_) { cancelMenuFlip(); showMenuFace(back); }
   }
 
   function showMenuFace(back) {
     menuBack = back;
     $('menuFront').hidden = back; $('menuBack').hidden = !back;
-    $('flipMenuBtn').setAttribute('aria-label', back ? '앞면 보기' : '뒷면 보기');
-    $('menuFaceStatus').textContent = back ? '뒷면' : '앞면';
+    $('flipMenuBtn').setAttribute('aria-label', back ? '첫 페이지 보기' : '다음 페이지 보기');
+    $('menuFaceStatus').textContent = back ? '2 / 2 페이지' : '1 / 2 페이지';
     fitMenu();
   }
   function fitMenu() {
