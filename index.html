@@ -89,25 +89,43 @@
     .menu-dish { margin: 18px 0 0; font-size: clamp(21px, 2.7vw, 30px); font-weight: 600; line-height: 1.6; word-break: keep-all; }
     .menu-en { display: block; margin-top: 3px; color: #58412d; font: italic 600 clamp(19px, 2.3vw, 25px)/1.35 "Cormorant Garamond", Georgia, serif; letter-spacing: .01em; }
     .menu-detail { display: block; margin: 6px 0; font-size: .63em; font-weight: 500; color: #533e2b; line-height: 1.8; }
-    body[data-screen="trot"] { max-width: 1400px; background: repeating-linear-gradient(125deg, #ff1588 0 72px, #ff9f00 72px 144px, #fff100 144px 216px, #28e65d 216px 288px, #23d9ff 288px 360px, #6652ff 360px 432px, #d448ff 432px 504px); }
-    body[data-screen="trot"] .screen-switch { background: #fff400; padding: 8px; border: 4px dashed #fc1687; box-shadow: 5px 5px #27114b; }
-    body[data-screen="trot"] .screen-switch button { font-family: "Jua", sans-serif; color: #30115a; background: white; }
+    body[data-screen="trot"] { max-width: none; height: 100vh; padding: 12px; overflow: hidden; background: repeating-linear-gradient(125deg, #ff1588 0 72px, #ff9f00 72px 144px, #fff100 144px 216px, #28e65d 216px 288px, #23d9ff 288px 360px, #6652ff 360px 432px, #d448ff 432px 504px); }
+    body[data-screen="trot"] .screen-switch { background: #fff400; padding: 5px; border: 3px dashed #fc1687; box-shadow: 4px 4px #27114b; }
+    body[data-screen="trot"] .screen-switch button { font-family: "Jua", sans-serif; color: #30115a; background: white; padding: 6px 12px; }
     body[data-screen="trot"] .screen-switch [aria-pressed="true"] { color: white; background: #dd0069; }
-    .trot-party { margin: 32px 0 48px; padding: clamp(18px, 4vw, 54px); border: 12px ridge #ffe900; background: #fffbc1; text-align: center; box-shadow: 12px 12px #7b0077; }
-    .trot-eyebrow { display: inline-block; margin: 0; padding: 8px 20px; color: #fff000; background: #e00068; border: 4px dotted white; font: 400 clamp(28px, 4vw, 50px)/1.2 "Gugi", cursive; transform: rotate(-4deg); }
-    .trot-title { margin: 28px 0 12px; font: 400 clamp(48px, 8vw, 112px)/1.15 "Black Han Sans", Impact, sans-serif; letter-spacing: -.06em; white-space: normal; color: #ec006c; text-shadow: 4px 4px white, 8px 8px #2c17a9; word-break: keep-all; }
-    .trot-rainbow { height: 28px; margin: 24px -8px; border: 3px solid #342159; border-radius: 50%; background: linear-gradient(90deg, #f00, #ff9600, #ff0, #00dc3e, #00baff, #4b00b5, #fc00d0); }
-    .trot-subtitle { margin: 18px 0 32px; color: #251b9b; font: 900 clamp(22px, 4vw, 46px)/1.2 Georgia, serif; text-decoration: underline wavy #ff168e; }
-    .trot-dish { position: relative; margin: 38px 0; padding: 24px 12px; border: 7px double #ed0780; background: #fff000; box-shadow: 8px 8px #301662; transform: rotate(-1.5deg); }
-    .trot-dish:nth-of-type(even) { margin-left: 5%; background: #6effe6; border: 6px dashed #3b1cb8; transform: rotate(2deg); }
-    .trot-dish:nth-of-type(3n) { margin-right: 4%; color: white; background: #9d008c; border-color: #ffdf00; transform: rotate(-3deg); }
-    .trot-dish h2 { margin: 0; font: 400 clamp(36px, 6vw, 82px)/1.3 "Jua", "Arial Black", sans-serif; color: #c6003c; text-shadow: 2px 2px white; overflow-wrap: anywhere; }
-    .trot-dish:nth-of-type(even) h2 { font-family: "Gugi", cursive; font-size: clamp(28px, 4.8vw, 62px); color: #201a86; }
-    .trot-dish:nth-of-type(3n) h2 { font-family: "Black Han Sans", Impact, sans-serif; color: #fff100; text-shadow: 3px 3px #4a064c; }
-    .trot-english { margin: 12px 0 0; color: #14276d; font: 900 italic clamp(22px, 3.6vw, 46px)/1.25 Georgia, serif; overflow-wrap: anywhere; }
-    .trot-dish:nth-of-type(3n) .trot-english { color: white; font-family: "Courier New", monospace; }
-    .trot-detail { font: 400 clamp(20px, 3vw, 35px)/1.6 "Noto Serif KR", serif; }
-    .trot-finale { margin: 38px 0 0; padding: 18px; background: #fb2294; color: white; border: 6px dotted yellow; font: 400 clamp(28px, 5vw, 60px)/1.3 "Gugi", cursive; text-shadow: 3px 3px #34136e; }
+    .trot-stage { position: relative; width: 100%; margin-top: 12px; }
+    .trot-party { position: absolute; top: 0; left: 0; width: 1080px; height: 1760px; transform-origin: 0 0; display: grid; grid-template-rows: 500px 24px minmax(0, 1fr) 76px; gap: 18px; padding: 24px; border: 12px ridge #ffe900; background: #fffbc1; text-align: center; box-shadow: 8px 8px #7b0077; }
+    .trot-hero { min-width: 0; }
+    .trot-eyebrow { display: inline-block; margin: 0; padding: 4px 20px; color: #fff000; background: #e00068; border: 4px dotted white; font: 400 30px/1.1 "Gugi", cursive; transform: rotate(-3deg); }
+    .trot-title { margin: 14px 0 8px; font: 400 200px/.94 "Black Han Sans", Impact, sans-serif; letter-spacing: -.065em; color: #ec006c; text-shadow: 4px 4px white, 8px 8px #2c17a9; white-space: nowrap; }
+    .trot-title span { display: block; }
+    .trot-rainbow { margin: 0; border: 3px solid #342159; border-radius: 50%; background: linear-gradient(90deg, #f00, #ff9600, #ff0, #00dc3e, #00baff, #4b00b5, #fc00d0); }
+    .trot-subtitle { margin: 8px 0 0; color: #251b9b; font: 900 28px/1.1 Georgia, serif; text-decoration: underline wavy #ff168e; }
+    .trot-dishes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 18px; min-height: 0; }
+    .trot-dish { min-width: 0; min-height: 0; padding: 12px 8px; display: flex; flex-direction: column; justify-content: center; border: 7px double #ed0780; background: #fff000; box-shadow: 5px 5px #301662; transform: rotate(-1deg); }
+    .trot-dish:nth-child(even) { background: #6effe6; border: 6px dashed #3b1cb8; transform: rotate(1.5deg); }
+    .trot-dish:nth-child(3n) { color: white; background: #9d008c; border-color: #ffdf00; transform: rotate(-1.5deg); }
+    .trot-dish h2 { margin: 0; font: 400 52px/1.16 "Jua", "Arial Black", sans-serif; color: #c6003c; text-shadow: 2px 2px white; overflow-wrap: anywhere; letter-spacing: -.035em; }
+    .trot-dish:nth-child(even) h2 { font-family: "Gugi", cursive; font-size: 40px; color: #201a86; }
+    .trot-dish:nth-child(3n) h2 { font-family: "Black Han Sans", Impact, sans-serif; color: #fff100; text-shadow: 3px 3px #4a064c; }
+    .trot-english { margin: 10px 0 0; color: #14276d; font: 900 italic 25px/1.18 Georgia, serif; overflow-wrap: anywhere; }
+    .trot-dish:nth-child(3n) .trot-english { color: white; font-family: "Courier New", monospace; }
+    .trot-detail { margin: 6px 0; font: 600 22px/1.3 "Noto Serif KR", serif; }
+    .trot-finale { margin: 0; padding: 6px; background: #fb2294; color: white; border: 6px dotted yellow; font: 400 29px/1.05 "Gugi", cursive; text-shadow: 3px 3px #34136e; }
+    .trot-stage[data-layout="landscape"] .trot-party { width: 1800px; height: 1000px; grid-template-rows: 250px 20px minmax(0, 1fr) 50px; gap: 12px; }
+    .trot-stage[data-layout="landscape"] .trot-title { font-size: 196px; margin: 2px 0; }
+    .trot-stage[data-layout="landscape"] .trot-title span { display: inline; }
+    .trot-stage[data-layout="landscape"] .trot-title span + span { margin-left: 32px; }
+    .trot-stage[data-layout="landscape"] .trot-eyebrow { font-size: 22px; padding: 2px 14px; }
+    .trot-stage[data-layout="landscape"] .trot-subtitle { font-size: 22px; margin: 0; }
+    .trot-stage[data-layout="landscape"] .trot-dishes { gap: 12px; }
+    .trot-stage[data-layout="landscape"] .trot-dish { padding: 6px; }
+    .trot-stage[data-layout="landscape"] .trot-dish h2 { font-size: 43px; }
+    .trot-stage[data-layout="landscape"] .trot-dish:nth-child(even) h2 { font-size: 34px; }
+    .trot-stage[data-layout="landscape"] .trot-english { font-size: 20px; margin-top: 4px; }
+    .trot-stage[data-layout="landscape"] .trot-detail { font-size: 18px; margin: 3px 0; }
+    .trot-stage[data-layout="landscape"] .trot-finale { font-size: 28px; }
+    .trot-stage[data-layout="landscape"] .trot-finale br { display: none; }
     @media(max-width: 600px) { .screen-bar { flex-wrap: wrap; gap: 8px; } .screen-switch { order: -1; } .screen-bar header { flex-basis: 100%; } .menu-paper { margin-top: 22px; padding: 34px 18px; } }
     @media (min-width: 1000px) and (orientation: landscape) {
       body { max-width: 1920px; }
@@ -134,7 +152,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.2</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.3</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -184,28 +202,30 @@
   </main>
 
   <main id="trotScreen" hidden aria-label="무지개 뽕짝 메뉴판">
-    <div class="trot-party">
+    <div id="trotStage" class="trot-stage"><div id="trotBoard" class="trot-party">
+      <div class="trot-hero">
       <p class="trot-eyebrow">♬ 경 축 · 밥 상 개 장 ♬</p>
-      <h1 class="trot-title">오늘의 밥상<br>大 잔 치</h1>
+      <h1 class="trot-title"><span>오늘의 밥상</span><span>大 잔 치</span></h1>
+      <p class="trot-subtitle" lang="en">★ VERY SPECIAL DINNER SHOW ★</p></div>
       <div class="trot-rainbow" aria-hidden="true"></div>
-      <p class="trot-subtitle" lang="en">★ VERY SPECIAL DINNER SHOW ★</p>
+      <div class="trot-dishes">
       <section class="trot-dish"><h2>늙은호박콩밥</h2><p class="trot-english" lang="en">OLD PUMPKIN &amp; KONG BOB</p></section>
       <section class="trot-dish"><h2>삼겹살 김치찜</h2><p class="trot-english" lang="en">PIG THREE FLOOR<br>KIMCHI STEAM!!</p></section>
       <section class="trot-dish"><h2>모둠전 3종 쎄트</h2><p class="trot-detail">표고버섯전 · 애호박전 · 맛살하트전</p><p class="trot-english" lang="en">MUSHROOM JEON!<br>BABY PUMPKIN JEON!<br>CRAB STICK LOVE HEART!</p></section>
       <section class="trot-dish"><h2>동 치 미</h2><p class="trot-english" lang="en">DONG! CHI! ME!<br>RADISH SWIMMING POOL</p></section>
       <section class="trot-dish"><h2>소고기뭇국</h2><p class="trot-english" lang="en">BEEF &amp; MOO SOUP</p></section>
       <section class="trot-dish"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE BEEF PARTY</p></section>
-      <div class="trot-rainbow" aria-hidden="true"></div>
       <section class="trot-dish"><h2>호박고구마케이크</h2><p class="trot-english" lang="en">SWEET POTATO<br>VERY CAKE NICE</p></section>
       <section class="trot-dish"><h2>말차판나코타</h2><p class="trot-english" lang="en">MATCHA PANNA<br>KOREA ITALY SOFT THING</p></section>
       <section class="trot-dish"><h2>여주 끓인 물</h2><p class="trot-english" lang="en">BITTER MELON<br>HOT WATER SPECIAL</p></section>
+      </div>
       <p class="trot-finale">무지개처럼 드시고<br>행복만땅 되세요 ♬</p>
-    </div>
+    </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.2"></script>
-  <script src="route-catalog.js?v=20261104.2"></script>
-  <script src="browser-api.js?v=20261104.2"></script>
-  <script src="script.js?v=20261104.2"></script>
+  <script src="news-player.js?v=20261104.3"></script>
+  <script src="route-catalog.js?v=20261104.3"></script>
+  <script src="browser-api.js?v=20261104.3"></script>
+  <script src="script.js?v=20261104.3"></script>
 </body>
 </html>

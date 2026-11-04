@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 function setup(extra = {}) {
   const ctx = vm.createContext({ URL, AbortController, console, ...extra });
+  if (extra.window) { Object.assign(ctx, extra.window); ctx.window = ctx; }
   for (const file of ['route-catalog.js', 'browser-api.js', 'news-player.js']) vm.runInContext(readFileSync(new URL('../' + file, import.meta.url), 'utf8'), ctx);
   return ctx;
 }
@@ -76,12 +77,15 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
+  ids.trotStage.getBoundingClientRect = () => ({ top: 90 }); ids.trotStage.clientWidth = 1056;
+  ids.trotStage.style = {}; ids.trotBoard.style = {};
   let fullscreenCalls = 0;
   const ctx = setup({
+    window: { innerWidth: 1080, innerHeight: 1920, addEventListener(type, fn) { events['window-' + type] = fn; } },
     document: { hidden: false, body: element(), documentElement: { style: { setProperty(key, value) { this[key] = value; } }, requestFullscreen: async () => { fullscreenCalls++; } }, getElementById: id => ids[id], createElement: element, addEventListener(type, fn) { events[type] = fn; }, head: { appendChild(script) { const u = new URL(script.src); Promise.resolve().then(() => ctx[u.searchParams.get('callback')](u.searchParams.get('type') === 'subway' ? { ok: false, error: { code: 'NETWORK', message: 'offline' } } : { ok: true, data: busBody })); } } },
     localStorage: { getItem: () => JSON.stringify({ ...settings, relayUrl: 'https://script.google.com/macros/s/test/exec', relayToken: 'test-token-123456789', interval: 30 }), setItem(k, v) { stored = JSON.parse(v); } },
     setTimeout: (fn, ms) => { const task = { fn, ms, cleared: false }; timers.push(task); return task; }, clearTimeout(task) { if (task) task.cleared = true; }, setInterval: () => 0,
@@ -145,7 +149,14 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   events.visibilitychange();
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   ids.trotScreenBtn.onclick();
-  assert.equal(ids.trotScreen.hidden, false); assert.equal(ids.menuScreen.hidden, true); assert.equal(ids.transitHeader.hidden, true);
+  assert.equal(ids.trotScreen.hidden, false);
+  assert(parseFloat(ids.trotStage.style.height) + 90 <= 1920 - 24);
+  const portraitScale = Number(ids.trotBoard.style.transform.match(/scale\(([^)]+)\)/)[1]);
+  assert(portraitScale * 1080 <= 1056);
+  ctx.window.innerWidth = 1920; ctx.window.innerHeight = 1080; ids.trotStage.clientWidth = 1896; events['window-resize']();
+  assert(parseFloat(ids.trotStage.style.height) + 90 <= 1080 - 24);
+  const landscapeScale = Number(ids.trotBoard.style.transform.match(/scale\(([^)]+)\)/)[1]);
+  assert(landscapeScale * 1800 <= 1896); assert.equal(ids.menuScreen.hidden, true); assert.equal(ids.transitHeader.hidden, true);
   assert.equal(ids.newsPlayer.children.length, 0);
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   ids.transitScreenBtn.onclick();
