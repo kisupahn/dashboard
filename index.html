@@ -81,10 +81,10 @@
     body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
     .menu-board { position: absolute; top: 0; left: 0; width: 860px; transform-origin: 0 0; }
-    .menu-paper { position: relative; width: 100%; background-color: #f5eedf; background-image: radial-gradient(ellipse at 26% 12%, #fffdf580, transparent 65%), url("paper-grain.svg?v=20261104.15"), linear-gradient(90deg, #b39a6a0c, transparent 8%, transparent 92%, #b39a6a0f); background-size: 100% 100%, 240px 240px, 100% 100%; box-shadow: inset 0 0 36px #95774112, inset 1px 1px 0 #fffdf5, 0 5px 18px #47351c12; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1420px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .menu-paper { position: relative; width: 100%; background-color: #f5eedf; background-image: radial-gradient(ellipse at 26% 12%, #fffdf580, transparent 65%), url("paper-grain.svg?v=20261104.16"), linear-gradient(90deg, #b39a6a0c, transparent 8%, transparent 92%, #b39a6a0f); background-size: 100% 100%, 240px 240px, 100% 100%; box-shadow: inset 0 0 36px #95774112, inset 1px 1px 0 #fffdf5, 0 5px 18px #47351c12; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1420px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
     .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
     .menu-heading { margin-bottom: 24px; }
-    .menu-heading h1 { margin: 0; font: italic 600 clamp(82px, 11vw, 116px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
+    .menu-heading h1 { margin: 0; font: italic 600 clamp(65.6px, 8.8vw, 92.8px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
     .menu-heading p { margin: 6px 0 0; font-size: 32px; letter-spacing: .18em; }
     .menu-heading .menu-date { display: block; margin-top: 14px; color: #483321; font: 600 32px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .16em; font-variant-numeric: tabular-nums; }
     .menu-settings-toggle { position: fixed; right: 16px; bottom: 14px; z-index: 10; width: 44px; height: 44px; padding: 7px; border: 0; color: #79603e; background: transparent; opacity: .65; transition: opacity .2s, transform .2s; }
@@ -169,7 +169,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.15</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.16</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -258,9 +258,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.15"></script>
-  <script src="route-catalog.js?v=20261104.15"></script>
-  <script src="browser-api.js?v=20261104.15"></script>
-  <script src="script.js?v=20261104.15"></script>
+  <script src="news-player.js?v=20261104.16"></script>
+  <script src="route-catalog.js?v=20261104.16"></script>
+  <script src="browser-api.js?v=20261104.16"></script>
+  <script src="script.js?v=20261104.16"></script>
 </body>
 </html>
