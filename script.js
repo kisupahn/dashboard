@@ -301,6 +301,17 @@ updateClock(); setInterval(updateClock, 1000);
     refresh();
   };
   document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(timer); } else { refresh(); } });
+  function fitMenu() {
+    var stage = $('menuStage'), board = $('menuBoard');
+    if (activeScreen !== 'menu' || !stage || !stage.getBoundingClientRect) return;
+    var height = Math.max(board.offsetHeight, board.scrollHeight + 2);
+    if (!height) return;
+    var available = Math.max(1, window.innerHeight - stage.getBoundingClientRect().top - 20);
+    var scale = Math.min(1, stage.clientWidth / 860, available / height);
+    board.style.transform = 'scale(' + scale + ')';
+    board.style.left = Math.max(0, (stage.clientWidth - 860 * scale) / 2) + 'px';
+    stage.style.height = height * scale + 'px';
+  }
   function fitTrot() {
     var stage = $('trotStage'), board = $('trotBoard');
     if (activeScreen !== 'trot' || !stage || !stage.getBoundingClientRect) return;
@@ -313,13 +324,14 @@ updateClock(); setInterval(updateClock, 1000);
     board.style.left = Math.max(0, (stage.clientWidth - width * scale) / 2) + 'px';
     stage.style.height = height * scale + 'px';
   }
-  if (typeof window !== 'undefined') window.addEventListener('resize', fitTrot);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTrot);
+  function fitMenuScreens() { fitMenu(); fitTrot(); }
+  if (typeof window !== 'undefined') window.addEventListener('resize', fitMenuScreens);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitMenuScreens);
   function setScreen(screen, remember) {
     activeScreen = screen;
     $('transitHeader').hidden = screen !== 'transit'; $('transitScreen').hidden = screen !== 'transit'; $('menuScreen').hidden = screen !== 'menu'; $('trotScreen').hidden = screen !== 'trot';
     document.body.setAttribute('data-screen', screen);
-    if (screen === 'trot') fitTrot();
+    fitMenuScreens();
     $('transitScreenBtn').setAttribute('aria-pressed', String(screen === 'transit'));
     $('menuScreenBtn').setAttribute('aria-pressed', String(screen === 'menu'));
     $('trotScreenBtn').setAttribute('aria-pressed', String(screen === 'trot'));

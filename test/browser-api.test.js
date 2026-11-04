@@ -77,12 +77,14 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
   ids.trotStage.getBoundingClientRect = () => ({ top: 90 }); ids.trotStage.clientWidth = 1056;
   ids.trotStage.style = {}; ids.trotBoard.style = {};
+  ids.menuStage.getBoundingClientRect = () => ({ top: 90 }); ids.menuStage.clientWidth = 1056; ids.menuStage.style = {};
+  ids.menuBoard.offsetHeight = 1500; ids.menuBoard.scrollHeight = 1498; ids.menuBoard.style = {};
   let fullscreenCalls = 0;
   const ctx = setup({
     window: { innerWidth: 1080, innerHeight: 1920, addEventListener(type, fn) { events['window-' + type] = fn; } },
@@ -143,7 +145,14 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ids.settings.hidden, true);
   ids.menuScreenBtn.onclick();
-  assert.equal(ids.menuScreen.hidden, false); assert.equal(ids.transitHeader.hidden, true); assert.equal(ids.transitScreen.hidden, true);
+  assert.equal(ids.menuScreen.hidden, false);
+  assert(parseFloat(ids.menuStage.style.height) + 90 <= 1920 - 20);
+  ctx.window.innerWidth = 1920; ctx.window.innerHeight = 1080; events['window-resize']();
+  assert(parseFloat(ids.menuStage.style.height) + 90 <= 1080 - 20);
+  ctx.window.innerWidth = 390; ctx.window.innerHeight = 844; ids.menuStage.clientWidth = 358; events['window-resize']();
+  assert(parseFloat(ids.menuStage.style.height) + 90 <= 844 - 20);
+  const menuScale = Number(ids.menuBoard.style.transform.match(/scale\(([^)]+)\)/)[1]); assert(menuScale * 860 <= 358);
+  ctx.window.innerWidth = 1080; ctx.window.innerHeight = 1920; assert.equal(ids.transitHeader.hidden, true); assert.equal(ids.transitScreen.hidden, true);
   assert.equal(ids.newsPlayer.children.length, 0);
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   events.visibilitychange();
