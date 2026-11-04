@@ -268,8 +268,10 @@ updateClock(); setInterval(updateClock, 1000);
   }
   document.addEventListener('click', function (event) {
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
+    if (!node || node.closest('#screenSwitch')) return;
+    if (activeScreen === 'menu') { showMenuFace(!menuBack); return; }
     if (activeScreen !== 'transit') return;
-    if (!node || node.closest('#screenSwitch, #settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
+    if (node.closest('#screenSwitch, #settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
     if (!$('refreshBtn').disabled) refresh(true);
   });
   $('settingsForm').onsubmit = function (event) {
@@ -301,6 +303,14 @@ updateClock(); setInterval(updateClock, 1000);
     refresh();
   };
   document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(timer); } else { refresh(); } });
+  var menuBack = false;
+  function showMenuFace(back) {
+    menuBack = back;
+    $('menuFront').hidden = back; $('menuBack').hidden = !back;
+    $('flipMenuBtn').setAttribute('aria-label', back ? '앞면 보기' : '뒷면 보기');
+    $('menuFaceStatus').textContent = back ? '뒷면' : '앞면';
+    fitMenu();
+  }
   function fitMenu() {
     var stage = $('menuStage'), board = $('menuBoard');
     if (activeScreen !== 'menu' || !stage || !stage.getBoundingClientRect) return;
@@ -331,6 +341,7 @@ updateClock(); setInterval(updateClock, 1000);
     activeScreen = screen;
     $('transitHeader').hidden = screen !== 'transit'; $('transitScreen').hidden = screen !== 'transit'; $('menuScreen').hidden = screen !== 'menu'; $('trotScreen').hidden = screen !== 'trot';
     document.body.setAttribute('data-screen', screen);
+    if (screen === 'menu') showMenuFace(false);
     fitMenuScreens();
     $('transitScreenBtn').setAttribute('aria-pressed', String(screen === 'transit'));
     $('menuScreenBtn').setAttribute('aria-pressed', String(screen === 'menu'));

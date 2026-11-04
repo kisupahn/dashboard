@@ -80,7 +80,9 @@
     body[data-screen="menu"] .screen-switch button { font-family: "Noto Serif KR", Georgia, serif; border-color: #d7c9af; background: transparent; color: #776242; }
     body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
-    .menu-paper { position: absolute; top: 0; left: 0; width: 860px; margin: 0; padding: 36px 42px; transform-origin: 0 0; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .menu-paper { position: absolute; top: 0; left: 0; width: 860px; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1220px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
+    .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+    .menu-flip { margin: 28px auto 0; padding: 6px 12px; background: transparent; border: 0; color: #6a543d; font: 500 16px/1.4 "Noto Serif KR", serif; }
     .menu-heading { margin-bottom: 24px; }
     .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; }
     .menu-heading p { margin: 6px 0 0; font-size: 24px; letter-spacing: .18em; }
@@ -160,7 +162,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.7</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.8</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -182,30 +184,36 @@
   </div>
 
   </div>
-  <main id="menuScreen" hidden aria-label="오늘의 메뉴">
+  <main id="menuScreen" hidden aria-label="메뉴판">
     <div id="menuStage" class="menu-stage"><div id="menuBoard" class="menu-paper">
       <div class="menu-heading"><h1 lang="it">Menù</h1><p>오늘의 메뉴</p></div>
-      <section class="menu-course" aria-label="밥"><h2 lang="it">RISO</h2>
-        <p class="menu-dish">늙은호박콩밥<span class="menu-translation" lang="it">Riso con zucca e fagioli</span></p>
-      </section>
-      <section class="menu-course" aria-label="주요리"><h2 lang="it">PIATTI PRINCIPALI</h2>
-        <p class="menu-dish">삼겹살 김치찜<span class="menu-translation" lang="it">Pancetta brasata al kimchi</span></p>
-        <p class="menu-dish">버섯부추차돌박이<span class="menu-translation" lang="it">Manzo con funghi ed erba cipollina</span></p>
-      </section>
-      <section class="menu-course" aria-label="모둠전"><h2 lang="it">TRIS DI JEON</h2>
-        <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="it">Shiitake, zucchine e surimi</span></p>
-      </section>
-      <section class="menu-course" aria-label="국과 곁들임"><h2 lang="it">ZUPPA E CONTORNO</h2>
-        <p class="menu-dish">소고기뭇국<span class="menu-translation" lang="it">Zuppa di manzo e ravanello</span></p>
-        <p class="menu-dish">동치미<span class="menu-translation" lang="it">Dongchimi di ravanello</span></p>
-      </section>
-      <section class="menu-course" aria-label="후식"><h2 lang="it">DOLCI</h2>
-        <p class="menu-dish">호박고구마케이크<span class="menu-translation" lang="it">Torta di patate dolci</span></p>
-        <p class="menu-dish">말차판나코타<span class="menu-translation" lang="it">Panna cotta al matcha</span></p>
-      </section>
-      <section class="menu-course" aria-label="음료"><h2 lang="it">BEVANDA</h2>
-        <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="it">Infuso di melone amaro</span></p>
-      </section>
+      <div id="menuFront" class="menu-face" aria-label="앞면 · 식사">
+        <section class="menu-course" aria-label="전채"><h2 lang="it">ANTIPASTO</h2>
+          <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="it">Tris di jeon · Shiitake, zucchine e surimi</span></p>
+        </section>
+        <section class="menu-course" aria-label="첫 요리"><h2 lang="it">PRIMI</h2>
+          <p class="menu-dish">늙은호박콩밥<span class="menu-translation" lang="it">Riso con zucca e fagioli</span></p>
+          <p class="menu-dish">소고기뭇국<span class="menu-translation" lang="it">Zuppa di manzo e ravanello</span></p>
+        </section>
+        <section class="menu-course" aria-label="주요리"><h2 lang="it">SECONDI</h2>
+          <p class="menu-dish">삼겹살 김치찜<span class="menu-translation" lang="it">Pancetta brasata al kimchi</span></p>
+          <p class="menu-dish">버섯부추차돌박이<span class="menu-translation" lang="it">Manzo con funghi ed erba cipollina</span></p>
+        </section>
+        <section class="menu-course" aria-label="곁들임"><h2 lang="it">CONTORNO</h2>
+          <p class="menu-dish">동치미<span class="menu-translation" lang="it">Dongchimi di ravanello</span></p>
+        </section>
+      </div>
+      <div id="menuBack" class="menu-face" hidden aria-label="뒷면 · 후식과 음료">
+        <section class="menu-course" aria-label="후식"><h2 lang="it">DOLCI</h2>
+          <p class="menu-dish">호박고구마케이크<span class="menu-translation" lang="it">Torta di patate dolci</span></p>
+          <p class="menu-dish">말차판나코타<span class="menu-translation" lang="it">Panna cotta al matcha</span></p>
+        </section>
+        <section class="menu-course" aria-label="음료"><h2 lang="it">BEVANDA</h2>
+          <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="it">Infuso di melone amaro</span></p>
+        </section>
+      </div>
+      <button id="flipMenuBtn" class="menu-flip" type="button" aria-label="뒷면 보기">아무데나 눌러 뒤집기</button>
+      <p id="menuFaceStatus" class="sr-only" role="status">앞면</p>
     </div></div>
   </main>
 
@@ -231,9 +239,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.7"></script>
-  <script src="route-catalog.js?v=20261104.7"></script>
-  <script src="browser-api.js?v=20261104.7"></script>
-  <script src="script.js?v=20261104.7"></script>
+  <script src="news-player.js?v=20261104.8"></script>
+  <script src="route-catalog.js?v=20261104.8"></script>
+  <script src="browser-api.js?v=20261104.8"></script>
+  <script src="script.js?v=20261104.8"></script>
 </body>
 </html>

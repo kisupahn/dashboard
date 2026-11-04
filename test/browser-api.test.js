@@ -77,7 +77,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard', 'menuFront', 'menuBack', 'flipMenuBtn', 'menuFaceStatus']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
@@ -146,6 +146,13 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(ids.settings.hidden, true);
   ids.menuScreenBtn.onclick();
   assert.equal(ids.menuScreen.hidden, false);
+  assert.equal(ids.menuFront.hidden, false); assert.equal(ids.menuBack.hidden, true);
+  events.click({ target: { closest: () => null } });
+  assert.equal(ids.menuFront.hidden, true); assert.equal(ids.menuBack.hidden, false); assert.equal(ids.menuFaceStatus.textContent, '뒷면');
+  events.click({ target: { closest: () => true } });
+  assert.equal(ids.menuBack.hidden, false); // Screen controls do not flip the menu.
+  events.click({ target: { closest: () => null } });
+  assert.equal(ids.menuFront.hidden, false); assert.equal(ids.menuBack.hidden, true);
   assert(parseFloat(ids.menuStage.style.height) + 90 <= 1920 - 20);
   ctx.window.innerWidth = 1920; ctx.window.innerHeight = 1080; events['window-resize']();
   assert(parseFloat(ids.menuStage.style.height) + 90 <= 1080 - 20);
