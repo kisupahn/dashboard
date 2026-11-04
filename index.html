@@ -82,7 +82,6 @@
     .menu-stage { position: relative; width: 100%; margin-top: 12px; }
     .menu-paper { position: absolute; top: 0; left: 0; width: 860px; margin: 0; padding: 36px 42px; transform-origin: 0 0; min-height: 1220px; display: flex; flex-direction: column; border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
     .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
-    .menu-flip { margin: 28px auto 0; padding: 6px 12px; background: transparent; border: 0; color: #6a543d; font: 500 16px/1.4 "Noto Serif KR", serif; }
     .menu-heading { margin-bottom: 24px; }
     .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
     .menu-heading p { margin: 6px 0 0; font-size: 24px; letter-spacing: .18em; }
@@ -167,7 +166,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.9</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.10</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -217,7 +216,7 @@
           <p class="menu-dish">여주 끓인 물<span class="menu-translation" lang="it">Infuso di melone amaro</span></p>
         </section>
       </div>
-      <button id="flipMenuBtn" class="menu-flip" type="button" aria-label="뒷면 보기">아무데나 눌러 뒤집기</button>
+      <button id="flipMenuBtn" class="sr-only" type="button" aria-label="뒷면 보기">메뉴 뒤집기</button>
       <p id="menuFaceStatus" class="sr-only" role="status">앞면</p>
     </div></div>
   </main>
@@ -256,9 +255,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.9"></script>
-  <script src="route-catalog.js?v=20261104.9"></script>
-  <script src="browser-api.js?v=20261104.9"></script>
-  <script src="script.js?v=20261104.9"></script>
+  <script src="news-player.js?v=20261104.10"></script>
+  <script src="route-catalog.js?v=20261104.10"></script>
+  <script src="browser-api.js?v=20261104.10"></script>
+  <script src="script.js?v=20261104.10"></script>
 </body>
 </html>
