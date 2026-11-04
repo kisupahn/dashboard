@@ -77,7 +77,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard', 'menuFront', 'menuBack', 'flipMenuBtn', 'menuFaceStatus']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen', 'trotStage', 'trotBoard', 'menuStage', 'menuBoard', 'menuFront', 'menuBack', 'flipMenuBtn', 'menuFaceStatus', 'menuSettingsBtn', 'menuSettings', 'menuSettingsForm', 'menuTitle', 'menuSubtitle', 'menuDate', 'menuTitleInput', 'menuSubtitleInput', 'menuDateInput', 'menuSettingsStatus', 'closeMenuSettingsBtn']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
@@ -146,6 +146,18 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(ids.settings.hidden, true);
   ids.menuScreenBtn.onclick();
   assert.equal(ids.menuScreen.hidden, false);
+  assert.equal(ids.menuSettingsBtn.hidden, false);
+  assert.equal(ids.menuTitle.textContent, 'La Nostra Tavola'); assert.equal(ids.menuSubtitle.textContent, '우리의 식탁');
+  assert.match(ids.menuDate.textContent, /^\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}$/);
+  ids.menuSettingsBtn.onclick(); assert.equal(ids.menuSettings.hidden, false);
+  events.click({ target: { closest: () => null } }); assert.equal(ids.menuBack.hidden, true);
+  ids.menuTitleInput.value = 'La Tavola'; ids.menuSubtitleInput.value = '함께하는 식탁'; ids.menuDateInput.value = '2026-11-07T18:05';
+  ids.menuSettingsForm.onsubmit({ preventDefault() {} });
+  assert.equal(stored.title, 'La Tavola'); assert.equal(ids.menuTitle.textContent, 'La Tavola');
+  assert.equal(ids.menuDate.textContent, '2026.11.07 18:05'); assert.equal(ids.menuSettings.hidden, true);
+  ids.menuSettingsBtn.onclick(); ids.menuTitleInput.value = 'discard'; ids.closeMenuSettingsBtn.onclick();
+  assert.equal(ids.menuTitle.textContent, 'La Tavola');
+  stored = undefined;
   assert.equal(ids.menuFront.hidden, false); assert.equal(ids.menuBack.hidden, true);
   events.click({ target: { closest: () => null } });
   assert.equal(ids.menuFront.hidden, true); assert.equal(ids.menuBack.hidden, false); assert.equal(ids.menuFaceStatus.textContent, '뒷면');

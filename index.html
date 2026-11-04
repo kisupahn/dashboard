@@ -84,8 +84,13 @@
     .menu-face { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
     .menu-flip { margin: 28px auto 0; padding: 6px 12px; background: transparent; border: 0; color: #6a543d; font: 500 16px/1.4 "Noto Serif KR", serif; }
     .menu-heading { margin-bottom: 24px; }
-    .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; }
+    .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere; }
     .menu-heading p { margin: 6px 0 0; font-size: 24px; letter-spacing: .18em; }
+    .menu-heading .menu-date { display: block; margin-top: 14px; color: #483321; font: 600 25px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .16em; font-variant-numeric: tabular-nums; }
+    .menu-settings-toggle { position: fixed; right: 16px; bottom: 14px; z-index: 10; padding: 6px 10px; border-color: #c8b99e; color: #5e4930; background: #f6f1e7; font-size: 12px; }
+    .menu-settings { position: fixed; right: 16px; bottom: 58px; z-index: 11; width: min(380px, calc(100vw - 32px)); max-height: calc(100vh - 90px); overflow-y: auto; padding: 20px; border: 1px solid #c8b99e; border-radius: 10px; background: #fcf9f2; box-shadow: 0 8px 32px #241b1426; color: #30251c; }
+    .menu-settings h2 { margin-bottom: 16px; font: 600 20px/1.3 "Noto Serif KR", serif; }
+    .menu-settings form { grid-template-columns: minmax(0, 1fr); } .menu-settings small { color: #715c43; }
     .menu-heading::after { content: ""; display: block; width: 56px; height: 1px; margin: 12px auto 0; background: #a58b5c; }
     .menu-course { margin-top: 28px; }
     .menu-course h2 { margin: 0 0 6px; color: #392a1b; font: 600 20px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .12em; }
@@ -162,7 +167,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.8</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.9</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -186,7 +191,7 @@
   </div>
   <main id="menuScreen" hidden aria-label="메뉴판">
     <div id="menuStage" class="menu-stage"><div id="menuBoard" class="menu-paper">
-      <div class="menu-heading"><h1 lang="it">Menù</h1><p>오늘의 메뉴</p></div>
+      <div class="menu-heading"><h1 id="menuTitle" lang="it">La Nostra Tavola</h1><p id="menuSubtitle">우리의 식탁</p><time id="menuDate" class="menu-date"></time></div>
       <div id="menuFront" class="menu-face" aria-label="앞면 · 식사">
         <section class="menu-course" aria-label="전채"><h2 lang="it">ANTIPASTO</h2>
           <p class="menu-dish">모둠전 세 가지<span class="menu-detail">표고버섯전 · 애호박전 · 맛살하트전</span><span class="menu-translation" lang="it">Tris di jeon · Shiitake, zucchine e surimi</span></p>
@@ -217,6 +222,18 @@
     </div></div>
   </main>
 
+  <button id="menuSettingsBtn" class="menu-settings-toggle" type="button" aria-label="메뉴판 설정" aria-expanded="false" aria-controls="menuSettings" hidden>설정</button>
+  <section id="menuSettings" class="menu-settings" role="dialog" aria-labelledby="menuSettingsHeading" hidden>
+    <h2 id="menuSettingsHeading">메뉴판 설정</h2>
+    <form id="menuSettingsForm">
+      <label>제목<input id="menuTitleInput" type="text" maxlength="120" required></label>
+      <label>한글 부제<input id="menuSubtitleInput" type="text" maxlength="120"></label>
+      <label>날짜 · 시간<input id="menuDateInput" type="datetime-local" step="60"><small>비워두면 현재 시각을 표시합니다.</small></label>
+      <p id="menuSettingsStatus" role="status"></p>
+      <div><button type="submit">저장</button> <button id="closeMenuSettingsBtn" type="button">닫기</button></div>
+    </form>
+  </section>
+
   <main id="trotScreen" hidden aria-label="무지개 뽕짝 메뉴판">
     <div id="trotStage" class="trot-stage"><div id="trotBoard" class="trot-party">
       <div class="trot-hero">
@@ -239,9 +256,9 @@
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.8"></script>
-  <script src="route-catalog.js?v=20261104.8"></script>
-  <script src="browser-api.js?v=20261104.8"></script>
-  <script src="script.js?v=20261104.8"></script>
+  <script src="news-player.js?v=20261104.9"></script>
+  <script src="route-catalog.js?v=20261104.9"></script>
+  <script src="browser-api.js?v=20261104.9"></script>
+  <script src="script.js?v=20261104.9"></script>
 </body>
 </html>

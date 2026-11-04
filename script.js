@@ -17,6 +17,17 @@ updateClock(); setInterval(updateClock, 1000);
   var timer, generation = 0, controllers = [], autoCount = 0, awaitingManual = false;
   var client = TransitAPI.createClient();
   var $ = function (id) { return document.getElementById(id); };
+  var menuStorageKey = 'seoul-menu-design-v1';
+  var menuDesign = { title: 'La Nostra Tavola', subtitle: '우리의 식탁', dateTime: '' };
+  try {
+    var savedMenu = JSON.parse(localStorage.getItem(menuStorageKey) || 'null');
+    if (savedMenu && typeof savedMenu === 'object') {
+      ['title', 'subtitle', 'dateTime'].forEach(function (key) { if (typeof savedMenu[key] === 'string') menuDesign[key] = savedMenu[key]; });
+    }
+  } catch (_) {}
+  if (!menuDesign.title.trim()) menuDesign.title = 'La Nostra Tavola';
+  if (menuDesign.dateTime && !Number.isFinite(new Date(menuDesign.dateTime).getTime())) menuDesign.dateTime = '';
+
   try {
     var saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && typeof saved === 'object') {
@@ -126,7 +137,7 @@ updateClock(); setInterval(updateClock, 1000);
   }
   $('settingsBtn').onclick = function () { toggle($('settings').hidden); };
   $('closeSettingsBtn').onclick = function () { toggle(false); };
-  document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !$('settings').hidden) toggle(false); });
+  document.addEventListener('keydown', function (event) { if (event.key !== 'Escape') return; if (!$('menuSettings').hidden) toggleMenuSettings(false); else if (!$('settings').hidden) toggle(false); });
   function makeCard(group) {
     var target = group;
     var article = document.createElement('article'); article.className = 'transit-card ' + target.type;
@@ -268,7 +279,8 @@ updateClock(); setInterval(updateClock, 1000);
   }
   document.addEventListener('click', function (event) {
     var node = event.target && (event.target.closest ? event.target : event.target.parentElement);
-    if (!node || node.closest('#screenSwitch')) return;
+    if (!node || node.closest('#screenSwitch, #menuSettings, #menuSettingsBtn')) return;
+    if (activeScreen === 'menu' && !$('menuSettings').hidden) return;
     if (activeScreen === 'menu') { showMenuFace(!menuBack); return; }
     if (activeScreen !== 'transit') return;
     if (node.closest('#screenSwitch, #settings, #settingsBtn, #newsPanel, a, input, textarea, select, label, summary')) return;
@@ -303,6 +315,39 @@ updateClock(); setInterval(updateClock, 1000);
     refresh();
   };
   document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(timer); } else { refresh(); } });
+  function updateMenuDate() {
+    var date = menuDesign.dateTime ? new Date(menuDesign.dateTime) : new Date();
+    function two(value) { return String(value).padStart(2, '0'); }
+    var text = date.getFullYear() + '.' + two(date.getMonth() + 1) + '.' + two(date.getDate()) + ' ' + two(date.getHours()) + ':' + two(date.getMinutes());
+    if ($('menuDate').textContent !== text) $('menuDate').textContent = text;
+    $('menuDate').setAttribute('datetime', date.getFullYear() + '-' + two(date.getMonth() + 1) + '-' + two(date.getDate()) + 'T' + two(date.getHours()) + ':' + two(date.getMinutes()));
+  }
+  function renderMenuIdentity() {
+    $('menuTitle').textContent = menuDesign.title; $('menuSubtitle').textContent = menuDesign.subtitle;
+    $('menuSubtitle').hidden = !menuDesign.subtitle;
+    updateMenuDate(); fitMenu();
+  }
+  function toggleMenuSettings(open) {
+    $('menuSettings').hidden = !open; $('menuSettingsBtn').setAttribute('aria-expanded', String(open));
+    if (open) {
+      $('menuTitleInput').value = menuDesign.title; $('menuSubtitleInput').value = menuDesign.subtitle; $('menuDateInput').value = menuDesign.dateTime;
+      $('menuSettingsStatus').textContent = ''; $('menuTitleInput').focus();
+    } else $('menuSettingsBtn').focus();
+  }
+  $('menuSettings').hidden = true;
+  $('menuSettingsBtn').onclick = function () { toggleMenuSettings($('menuSettings').hidden); };
+  $('closeMenuSettingsBtn').onclick = function () { toggleMenuSettings(false); };
+  $('menuSettingsForm').onsubmit = function (event) {
+    event.preventDefault();
+    var next = { title: String($('menuTitleInput').value).trim(), subtitle: String($('menuSubtitleInput').value).trim(), dateTime: String($('menuDateInput').value).trim() };
+    if (!next.title) { $('menuSettingsStatus').textContent = '제목을 입력하세요.'; return; }
+    if (next.dateTime && !Number.isFinite(new Date(next.dateTime).getTime())) { $('menuSettingsStatus').textContent = '날짜와 시간을 확인하세요.'; return; }
+    try { localStorage.setItem(menuStorageKey, JSON.stringify(next)); }
+    catch (_) { $('menuSettingsStatus').textContent = '저장할 수 없습니다. 브라우저 저장 설정을 확인하세요.'; return; }
+    menuDesign = next; renderMenuIdentity(); toggleMenuSettings(false);
+  };
+  setInterval(updateMenuDate, 1000);
+  renderMenuIdentity();
   var menuBack = false;
   function showMenuFace(back) {
     menuBack = back;
@@ -316,7 +361,7 @@ updateClock(); setInterval(updateClock, 1000);
     if (activeScreen !== 'menu' || !stage || !stage.getBoundingClientRect) return;
     var height = Math.max(board.offsetHeight, board.scrollHeight + 2);
     if (!height) return;
-    var available = Math.max(1, window.innerHeight - stage.getBoundingClientRect().top - 20);
+    var available = Math.max(1, window.innerHeight - stage.getBoundingClientRect().top - 56);
     var scale = Math.min(1, stage.clientWidth / 860, available / height);
     board.style.transform = 'scale(' + scale + ')';
     board.style.left = Math.max(0, (stage.clientWidth - 860 * scale) / 2) + 'px';
@@ -341,6 +386,7 @@ updateClock(); setInterval(updateClock, 1000);
     activeScreen = screen;
     $('transitHeader').hidden = screen !== 'transit'; $('transitScreen').hidden = screen !== 'transit'; $('menuScreen').hidden = screen !== 'menu'; $('trotScreen').hidden = screen !== 'trot';
     document.body.setAttribute('data-screen', screen);
+    $('menuSettingsBtn').hidden = screen !== 'menu'; $('menuSettings').hidden = true; $('menuSettingsBtn').setAttribute('aria-expanded', 'false');
     if (screen === 'menu') showMenuFace(false);
     fitMenuScreens();
     $('transitScreenBtn').setAttribute('aria-pressed', String(screen === 'transit'));
