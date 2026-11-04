@@ -76,7 +76,7 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
     return { children: [], hidden: false, value: '', className: '', set textContent(v) { text = v; this.children = []; }, get textContent() { return text; }, remove() {}, appendChild(c) { this.children.push(c); }, setAttribute() {}, focus() {} };
   }
   const ids = {};
-  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn']) ids[id] = element();
+  for (const id of ['clock', 'settings', 'settingsBtn', 'relayUrl', 'relayToken', 'station', 'arsId', 'interval', 'saveStatus', 'closeSettingsBtn', 'arrivalPanels', 'emptyState', 'refreshBtn', 'refreshStatus', 'refreshHint', 'settingsForm', 'clearBtn', 'presetBtn', 'stopEditor', 'addStopBtn', 'fullscreenBtn', 'renewNotice', 'date', 'textScale', 'textScaleValue', 'editTokenBtn', 'newsEnabled', 'newsUrl', 'newsPanel', 'newsPlayer', 'newsLink', 'transitHeader', 'transitScreen', 'menuScreen', 'transitScreenBtn', 'menuScreenBtn', 'trotScreenBtn', 'trotScreen']) ids[id] = element();
   ids.settings.hidden = true; ids.renewNotice.hidden = true;
   let stored;
   const events = {}, timers = [];
@@ -144,9 +144,13 @@ test('UI creates three independent cards, preserves keys, closes settings on sav
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   events.visibilitychange();
   assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
+  ids.trotScreenBtn.onclick();
+  assert.equal(ids.trotScreen.hidden, false); assert.equal(ids.menuScreen.hidden, true); assert.equal(ids.transitHeader.hidden, true);
+  assert.equal(ids.newsPlayer.children.length, 0);
+  assert.equal(timers.some(t => !t.cleared && t.fn.name === 'autoRefresh'), false);
   ids.transitScreenBtn.onclick();
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(ids.menuScreen.hidden, true); assert.equal(ids.transitHeader.hidden, false);
+  assert.equal(ids.menuScreen.hidden, true); assert.equal(ids.trotScreen.hidden, true); assert.equal(ids.transitHeader.hidden, false);
   assert.equal(ids.newsPlayer.children.length, 1);
   newsFrame = ids.newsPlayer.children[0];
   stored = undefined;

@@ -8,7 +8,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,600&family=Black+Han+Sans&family=Gugi&family=Jua&display=swap" rel="stylesheet">
   <style>
     :root { --text-scale: 1.35; --page: #ffffff; --ink: #1a1c20; --card: #ffffff; --edge: #dedfe3; --muted: #757982; --control: #f5f5f6; --error: #a83832; }
     * { box-sizing: border-box; }
@@ -76,19 +76,38 @@
     pre { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
     #refreshStatus { font-size: 12px; color: var(--muted); } #saveStatus:empty { display: none; } #emptyState { color: var(--muted); }
     [hidden] { display: none !important; }
-    body[data-screen="menu"] { background: #f6f1e7; color: #3e3329; max-width: 1200px; }
+    body[data-screen="menu"] { background: #f6f1e7; color: #241b14; max-width: 1200px; }
     body[data-screen="menu"] .screen-switch button { font-family: "Noto Serif KR", Georgia, serif; border-color: #d7c9af; background: transparent; color: #776242; }
     body[data-screen="menu"] .screen-switch [aria-pressed="true"] { background: #e9dfce; color: #3e3329; }
     .menu-paper { max-width: 800px; margin: 30px auto 32px; padding: clamp(28px, 5vw, 64px); border: 1px solid #d7c9af; text-align: center; font-family: "Noto Serif KR", "Batang", Georgia, serif; }
     .menu-heading { margin-bottom: 46px; }
-    .menu-heading h1 { margin: 0; font: italic 400 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; }
+    .menu-heading h1 { margin: 0; font: italic 600 clamp(64px, 9vw, 100px)/1.1 "Cormorant Garamond", Georgia, serif; letter-spacing: .015em; }
     .menu-heading p { margin: 12px 0 0; font-size: clamp(20px, 2.6vw, 28px); letter-spacing: .18em; }
     .menu-heading::after { content: ""; display: block; width: 56px; height: 1px; margin: 28px auto 0; background: #a58b5c; }
     .menu-course { margin-top: 36px; }
-    .menu-course h2 { margin: 0 0 14px; color: #8b724a; font: 500 13px/1.6 "Cormorant Garamond", Georgia, serif; letter-spacing: .24em; }
-    .menu-dish { margin: 18px 0 0; font-size: clamp(21px, 2.7vw, 30px); font-weight: 500; line-height: 1.6; word-break: keep-all; }
-    .menu-en { display: block; margin-top: 3px; color: #8b7965; font: italic 400 clamp(19px, 2.3vw, 25px)/1.35 "Cormorant Garamond", Georgia, serif; letter-spacing: .01em; }
-    .menu-detail { display: block; margin: 6px 0; font-size: .63em; font-weight: 400; color: #76634f; line-height: 1.8; }
+    .menu-course h2 { margin: 0 0 14px; color: #60451f; font: 600 13px/1.6 "Cormorant Garamond", Georgia, serif; letter-spacing: .24em; }
+    .menu-dish { margin: 18px 0 0; font-size: clamp(21px, 2.7vw, 30px); font-weight: 600; line-height: 1.6; word-break: keep-all; }
+    .menu-en { display: block; margin-top: 3px; color: #58412d; font: italic 600 clamp(19px, 2.3vw, 25px)/1.35 "Cormorant Garamond", Georgia, serif; letter-spacing: .01em; }
+    .menu-detail { display: block; margin: 6px 0; font-size: .63em; font-weight: 500; color: #533e2b; line-height: 1.8; }
+    body[data-screen="trot"] { max-width: 1400px; background: repeating-linear-gradient(125deg, #ff1588 0 72px, #ff9f00 72px 144px, #fff100 144px 216px, #28e65d 216px 288px, #23d9ff 288px 360px, #6652ff 360px 432px, #d448ff 432px 504px); }
+    body[data-screen="trot"] .screen-switch { background: #fff400; padding: 8px; border: 4px dashed #fc1687; box-shadow: 5px 5px #27114b; }
+    body[data-screen="trot"] .screen-switch button { font-family: "Jua", sans-serif; color: #30115a; background: white; }
+    body[data-screen="trot"] .screen-switch [aria-pressed="true"] { color: white; background: #dd0069; }
+    .trot-party { margin: 32px 0 48px; padding: clamp(18px, 4vw, 54px); border: 12px ridge #ffe900; background: #fffbc1; text-align: center; box-shadow: 12px 12px #7b0077; }
+    .trot-eyebrow { display: inline-block; margin: 0; padding: 8px 20px; color: #fff000; background: #e00068; border: 4px dotted white; font: 400 clamp(28px, 4vw, 50px)/1.2 "Gugi", cursive; transform: rotate(-4deg); }
+    .trot-title { margin: 28px 0 12px; font: 400 clamp(48px, 8vw, 112px)/1.15 "Black Han Sans", Impact, sans-serif; letter-spacing: -.06em; white-space: normal; color: #ec006c; text-shadow: 4px 4px white, 8px 8px #2c17a9; word-break: keep-all; }
+    .trot-rainbow { height: 28px; margin: 24px -8px; border: 3px solid #342159; border-radius: 50%; background: linear-gradient(90deg, #f00, #ff9600, #ff0, #00dc3e, #00baff, #4b00b5, #fc00d0); }
+    .trot-subtitle { margin: 18px 0 32px; color: #251b9b; font: 900 clamp(22px, 4vw, 46px)/1.2 Georgia, serif; text-decoration: underline wavy #ff168e; }
+    .trot-dish { position: relative; margin: 38px 0; padding: 24px 12px; border: 7px double #ed0780; background: #fff000; box-shadow: 8px 8px #301662; transform: rotate(-1.5deg); }
+    .trot-dish:nth-of-type(even) { margin-left: 5%; background: #6effe6; border: 6px dashed #3b1cb8; transform: rotate(2deg); }
+    .trot-dish:nth-of-type(3n) { margin-right: 4%; color: white; background: #9d008c; border-color: #ffdf00; transform: rotate(-3deg); }
+    .trot-dish h2 { margin: 0; font: 400 clamp(36px, 6vw, 82px)/1.3 "Jua", "Arial Black", sans-serif; color: #c6003c; text-shadow: 2px 2px white; overflow-wrap: anywhere; }
+    .trot-dish:nth-of-type(even) h2 { font-family: "Gugi", cursive; font-size: clamp(28px, 4.8vw, 62px); color: #201a86; }
+    .trot-dish:nth-of-type(3n) h2 { font-family: "Black Han Sans", Impact, sans-serif; color: #fff100; text-shadow: 3px 3px #4a064c; }
+    .trot-english { margin: 12px 0 0; color: #14276d; font: 900 italic clamp(22px, 3.6vw, 46px)/1.25 Georgia, serif; overflow-wrap: anywhere; }
+    .trot-dish:nth-of-type(3n) .trot-english { color: white; font-family: "Courier New", monospace; }
+    .trot-detail { font: 400 clamp(20px, 3vw, 35px)/1.6 "Noto Serif KR", serif; }
+    .trot-finale { margin: 38px 0 0; padding: 18px; background: #fb2294; color: white; border: 6px dotted yellow; font: 400 clamp(28px, 5vw, 60px)/1.3 "Gugi", cursive; text-shadow: 3px 3px #34136e; }
     @media(max-width: 600px) { .screen-bar { flex-wrap: wrap; gap: 8px; } .screen-switch { order: -1; } .screen-bar header { flex-basis: 100%; } .menu-paper { margin-top: 22px; padding: 34px 18px; } }
     @media (min-width: 1000px) and (orientation: landscape) {
       body { max-width: 1920px; }
@@ -102,7 +121,7 @@
 
 <body>
   <div class="screen-bar"><header id="transitHeader"><h1 id="clock">Loading...</h1><p id="date" class="date"></p><div><button id="refreshBtn" type="button">갱신</button> <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">설정</button></div></header>
-  <nav id="screenSwitch" class="screen-switch" aria-label="화면 선택"><button id="transitScreenBtn" type="button" aria-pressed="true" aria-controls="transitScreen">교통</button><button id="menuScreenBtn" type="button" aria-pressed="false" aria-controls="menuScreen">메뉴</button></nav></div>
+  <nav id="screenSwitch" class="screen-switch" aria-label="화면 선택"><button id="transitScreenBtn" type="button" aria-pressed="true" aria-controls="transitScreen">교통</button><button id="menuScreenBtn" type="button" aria-pressed="false" aria-controls="menuScreen">메뉴</button><button id="trotScreenBtn" type="button" aria-pressed="false" aria-controls="trotScreen">뽕짝</button></nav></div>
 
   <div id="transitScreen">
   <section id="settings" hidden>
@@ -115,7 +134,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.1</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.2</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -164,9 +183,29 @@
     </div>
   </main>
 
-  <script src="news-player.js?v=20261104.1"></script>
-  <script src="route-catalog.js?v=20261104.1"></script>
-  <script src="browser-api.js?v=20261104.1"></script>
-  <script src="script.js?v=20261104.1"></script>
+  <main id="trotScreen" hidden aria-label="무지개 뽕짝 메뉴판">
+    <div class="trot-party">
+      <p class="trot-eyebrow">♬ 경 축 · 밥 상 개 장 ♬</p>
+      <h1 class="trot-title">오늘의 밥상<br>大 잔 치</h1>
+      <div class="trot-rainbow" aria-hidden="true"></div>
+      <p class="trot-subtitle" lang="en">★ VERY SPECIAL DINNER SHOW ★</p>
+      <section class="trot-dish"><h2>늙은호박콩밥</h2><p class="trot-english" lang="en">OLD PUMPKIN &amp; KONG BOB</p></section>
+      <section class="trot-dish"><h2>삼겹살 김치찜</h2><p class="trot-english" lang="en">PIG THREE FLOOR<br>KIMCHI STEAM!!</p></section>
+      <section class="trot-dish"><h2>모둠전 3종 쎄트</h2><p class="trot-detail">표고버섯전 · 애호박전 · 맛살하트전</p><p class="trot-english" lang="en">MUSHROOM JEON!<br>BABY PUMPKIN JEON!<br>CRAB STICK LOVE HEART!</p></section>
+      <section class="trot-dish"><h2>동 치 미</h2><p class="trot-english" lang="en">DONG! CHI! ME!<br>RADISH SWIMMING POOL</p></section>
+      <section class="trot-dish"><h2>소고기뭇국</h2><p class="trot-english" lang="en">BEEF &amp; MOO SOUP</p></section>
+      <section class="trot-dish"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE BEEF PARTY</p></section>
+      <div class="trot-rainbow" aria-hidden="true"></div>
+      <section class="trot-dish"><h2>호박고구마케이크</h2><p class="trot-english" lang="en">SWEET POTATO<br>VERY CAKE NICE</p></section>
+      <section class="trot-dish"><h2>말차판나코타</h2><p class="trot-english" lang="en">MATCHA PANNA<br>KOREA ITALY SOFT THING</p></section>
+      <section class="trot-dish"><h2>여주 끓인 물</h2><p class="trot-english" lang="en">BITTER MELON<br>HOT WATER SPECIAL</p></section>
+      <p class="trot-finale">무지개처럼 드시고<br>행복만땅 되세요 ♬</p>
+    </div>
+  </main>
+
+  <script src="news-player.js?v=20261104.2"></script>
+  <script src="route-catalog.js?v=20261104.2"></script>
+  <script src="browser-api.js?v=20261104.2"></script>
+  <script src="script.js?v=20261104.2"></script>
 </body>
 </html>

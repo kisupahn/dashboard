@@ -11,7 +11,7 @@ updateClock(); setInterval(updateClock, 1000);
   var defaultRelayUrl = 'https://script.google.com/macros/s/AKfycbwBtccv4cEjgbfxSxXCHvtbYnOI7QNQcjB1AT_PGDfqDCWtB7f7vXVeFb13JLKDF9n4hA/exec';
   var storageKey = 'seoul-transit-settings-v1';
   var screenStorageKey = 'seoul-dashboard-screen-v1', activeScreen = 'transit';
-  try { if (localStorage.getItem(screenStorageKey) === 'menu') activeScreen = 'menu'; } catch (_) {}
+  try { var savedScreen = localStorage.getItem(screenStorageKey); if (savedScreen === 'menu' || savedScreen === 'trot') activeScreen = savedScreen; } catch (_) {}
   var fields = ['relayUrl', 'interval', 'textScale', 'newsUrl'];
   var settings = { relayUrl: defaultRelayUrl, relayToken: '', station: '노들/9/공항방향',  arsId: '20726/동작08, 20014/360', interval: 60, textScale: 135, newsEnabled: true, newsUrl: TransitNews.defaultURL };
   var timer, generation = 0, controllers = [], autoCount = 0, awaitingManual = false;
@@ -303,12 +303,13 @@ updateClock(); setInterval(updateClock, 1000);
   document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(timer); } else { refresh(); } });
   function setScreen(screen, remember) {
     activeScreen = screen;
-    $('transitHeader').hidden = screen === 'menu'; $('transitScreen').hidden = screen === 'menu'; $('menuScreen').hidden = screen !== 'menu';
+    $('transitHeader').hidden = screen !== 'transit'; $('transitScreen').hidden = screen !== 'transit'; $('menuScreen').hidden = screen !== 'menu'; $('trotScreen').hidden = screen !== 'trot';
     document.body.setAttribute('data-screen', screen);
     $('transitScreenBtn').setAttribute('aria-pressed', String(screen === 'transit'));
     $('menuScreenBtn').setAttribute('aria-pressed', String(screen === 'menu'));
+    $('trotScreenBtn').setAttribute('aria-pressed', String(screen === 'trot'));
     if (remember !== false) { try { localStorage.setItem(screenStorageKey, screen); } catch (_) {} }
-    if (screen === 'menu') {
+    if (screen !== 'transit') {
       clearTimeout(timer); controllers.forEach(function (controller) { controller.abort(); }); controllers = []; generation++;
       $('refreshBtn').disabled = false;
       $('newsPlayer').textContent = ''; newsSignature = '';
@@ -317,5 +318,6 @@ updateClock(); setInterval(updateClock, 1000);
   }
   $('transitScreenBtn').onclick = function () { if (activeScreen !== 'transit') setScreen('transit'); };
   $('menuScreenBtn').onclick = function () { if (activeScreen !== 'menu') setScreen('menu'); };
+  $('trotScreenBtn').onclick = function () { if (activeScreen !== 'trot') setScreen('trot'); };
   setScreen(activeScreen, false);
 })();
