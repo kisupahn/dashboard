@@ -96,9 +96,10 @@
     .trot-stage { position: relative; width: 100%; margin-top: 12px; }
     .trot-party { position: absolute; top: 0; left: 0; width: 1080px; height: 1760px; transform-origin: 0 0; display: grid; grid-template-rows: 500px 24px minmax(0, 1fr) 76px; gap: 18px; padding: 24px; border: 12px ridge #ffe900; background: #fffbc1; text-align: center; box-shadow: 8px 8px #7b0077; }
     .trot-hero { min-width: 0; }
-    .trot-eyebrow { display: inline-block; margin: 0; padding: 4px 20px; color: #fff000; background: #e00068; border: 4px dotted white; font: 400 30px/1.1 "Gugi", cursive; transform: rotate(-3deg); }
+    .trot-eyebrow { display: inline-block; margin: 0; padding: 4px 20px; color: #fff000; background: #006b31; border: 4px dotted white; font: 400 30px/1.1 "Gugi", cursive; transform: rotate(-3deg); }
     .trot-title { margin: 14px 0 8px; font: 400 200px/.94 "Black Han Sans", Impact, sans-serif; letter-spacing: -.065em; color: #ec006c; text-shadow: 4px 4px white, 8px 8px #2c17a9; white-space: nowrap; }
     .trot-title span { display: block; }
+    .trot-title span + span { color: #007a2c; }
     .trot-rainbow { margin: 0; border: 3px solid #342159; border-radius: 50%; background: linear-gradient(90deg, #f00, #ff9600, #ff0, #00dc3e, #00baff, #4b00b5, #fc00d0); }
     .trot-subtitle { margin: 8px 0 0; color: #251b9b; font: 900 28px/1.1 Georgia, serif; text-decoration: underline wavy #ff168e; }
     .trot-dishes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 18px; min-height: 0; }
@@ -110,6 +111,9 @@
     .trot-dish:nth-child(3n) h2 { font-family: "Black Han Sans", Impact, sans-serif; color: #fff100; text-shadow: 3px 3px #4a064c; }
     .trot-english { margin: 10px 0 0; color: #14276d; font: 900 italic 25px/1.18 Georgia, serif; overflow-wrap: anywhere; }
     .trot-dish:nth-child(3n) .trot-english { color: white; font-family: "Courier New", monospace; }
+    .trot-dish:nth-child(1), .trot-dish:nth-child(5), .trot-dish:nth-child(8) { background: #9cff32; border-color: #007236; }
+    .trot-dish:nth-child(1) h2, .trot-dish:nth-child(5) h2, .trot-dish:nth-child(8) h2 { color: #064d24; }
+    .trot-dish:nth-child(1) .trot-english, .trot-dish:nth-child(5) .trot-english, .trot-dish:nth-child(8) .trot-english { color: #173915; }
     .trot-detail { margin: 6px 0; font: 600 22px/1.3 "Noto Serif KR", serif; }
     .trot-finale { margin: 0; padding: 6px; background: #fb2294; color: white; border: 6px dotted yellow; font: 400 29px/1.05 "Gugi", cursive; text-shadow: 3px 3px #34136e; }
     .trot-stage[data-layout="landscape"] .trot-party { width: 1800px; height: 1000px; grid-template-rows: 250px 20px minmax(0, 1fr) 50px; gap: 12px; }
@@ -152,7 +156,7 @@
       <label class="full">글자 크기 <output id="textScaleValue" for="textScale">135%</output><input id="textScale" type="range" min="100" max="180" step="5" value="135"></label>
       <label>갱신 간격 (초, 최소 30)<input id="interval" type="number" min="30" max="3600" value="60" required></label>
       <div class="full news-setting"><label class="news-toggle"><input id="newsEnabled" type="checkbox" checked>뉴스</label><label><span class="sr-only">뉴스 영상 · 라이브 주소</span><input id="newsUrl" type="url" autocomplete="off" placeholder="유튜브 영상 또는 라이브 공유 주소"></label></div>
-      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.3</small></details>
+      <details class="full"><summary>진단</summary><pre id="diagnostics"></pre><p id="refreshStatus"></p><small>자료: 서울특별시 · 화면 20261104.4</small></details>
       <div class="full"><button type="submit">저장하고 닫기</button> <button id="presetBtn" type="button">내 조회조건 채우기</button> <button id="clearBtn" type="button">저장 정보 삭제</button></div>
     </form>
   </section>
@@ -210,22 +214,22 @@
       <div class="trot-rainbow" aria-hidden="true"></div>
       <div class="trot-dishes">
       <section class="trot-dish"><h2>늙은호박콩밥</h2><p class="trot-english" lang="en">OLD PUMPKIN &amp; KONG BOB</p></section>
-      <section class="trot-dish"><h2>삼겹살 김치찜</h2><p class="trot-english" lang="en">PIG THREE FLOOR<br>KIMCHI STEAM!!</p></section>
+      <section class="trot-dish"><h2>삼겹살 김치찜</h2><p class="trot-english" lang="en">SAM GYEOB SSAL<br>KIMCHI STEAM!!</p></section>
       <section class="trot-dish"><h2>모둠전 3종 쎄트</h2><p class="trot-detail">표고버섯전 · 애호박전 · 맛살하트전</p><p class="trot-english" lang="en">MUSHROOM JEON!<br>BABY PUMPKIN JEON!<br>CRAB STICK LOVE HEART!</p></section>
-      <section class="trot-dish"><h2>동 치 미</h2><p class="trot-english" lang="en">DONG! CHI! ME!<br>RADISH SWIMMING POOL</p></section>
+      <section class="trot-dish"><h2>동 치 미</h2><p class="trot-english" lang="en">DONG! CHI! ME!</p></section>
       <section class="trot-dish"><h2>소고기뭇국</h2><p class="trot-english" lang="en">BEEF &amp; MOO SOUP</p></section>
-      <section class="trot-dish"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE BEEF PARTY</p></section>
+      <section class="trot-dish"><h2>버섯부추<br>차돌박이</h2><p class="trot-english" lang="en">MUSHROOM BOO-CHOO<br>CAR STONE PARK TWO</p></section>
       <section class="trot-dish"><h2>호박고구마케이크</h2><p class="trot-english" lang="en">SWEET POTATO<br>VERY CAKE NICE</p></section>
-      <section class="trot-dish"><h2>말차판나코타</h2><p class="trot-english" lang="en">MATCHA PANNA<br>KOREA ITALY SOFT THING</p></section>
+      <section class="trot-dish"><h2>말차판나코타</h2><p class="trot-english" lang="en">MATCHA PANNA COTTA</p></section>
       <section class="trot-dish"><h2>여주 끓인 물</h2><p class="trot-english" lang="en">BITTER MELON<br>HOT WATER SPECIAL</p></section>
       </div>
       <p class="trot-finale">무지개처럼 드시고<br>행복만땅 되세요 ♬</p>
     </div></div>
   </main>
 
-  <script src="news-player.js?v=20261104.3"></script>
-  <script src="route-catalog.js?v=20261104.3"></script>
-  <script src="browser-api.js?v=20261104.3"></script>
-  <script src="script.js?v=20261104.3"></script>
+  <script src="news-player.js?v=20261104.4"></script>
+  <script src="route-catalog.js?v=20261104.4"></script>
+  <script src="browser-api.js?v=20261104.4"></script>
+  <script src="script.js?v=20261104.4"></script>
 </body>
 </html>
